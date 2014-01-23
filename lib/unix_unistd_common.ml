@@ -24,7 +24,7 @@ module Access = struct
 
   let is_set ~host t =
     let bit = _to_code ~host t in
-    fun code -> (bit land code) <> 0
+    fun code -> (bit land code) = bit
   let set ~host t =
     let bit = _to_code ~host t in
     fun code -> bit lor code
