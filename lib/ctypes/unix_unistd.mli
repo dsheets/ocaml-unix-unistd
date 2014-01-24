@@ -33,3 +33,6 @@ val read : Unix.file_descr -> unit Ctypes.ptr -> int -> int
 
 (** Can raise Unix.Unix_error *)
 val close : Unix.file_descr -> unit
+
+(** Can raise Unix.Unix_error *)
+val access : string -> Access.t list -> unit

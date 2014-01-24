@@ -54,3 +54,11 @@ let close =
     PosixTypes.(int @-> returning int)
   in
   fun fd -> ignore (c (Fd_send_recv.int_of_fd fd))
+
+external unix_unistd_access_ptr : unit -> int64 = "unix_unistd_access_ptr"
+
+let access =
+  let c = local ~check_errno:true (unix_unistd_access_ptr ())
+    PosixTypes.(string @-> Access.(view ~host) @-> returning int)
+  in
+  fun pathname mode -> ignore (c pathname mode)
