@@ -36,7 +36,9 @@ let write =
   let c = foreign ~check_errno:true "write"
     PosixTypes.(int @-> ptr void @-> size_t @-> returning size_t) in
   fun fd buf count ->
-    Size_t.to_int (c (Fd_send_recv.int_of_fd fd) buf (Size_t.of_int count))
+    try
+      Size_t.to_int (c (Fd_send_recv.int_of_fd fd) buf (Size_t.of_int count))
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"write",""))
 
 external unix_unistd_read_ptr : unit -> int64 = "unix_unistd_read_ptr"
 
@@ -45,7 +47,9 @@ let read =
     PosixTypes.(int @-> ptr void @-> size_t @-> returning size_t)
   in
   fun fd buf count ->
-    Size_t.to_int (c (Fd_send_recv.int_of_fd fd) buf (Size_t.of_int count))
+    try
+      Size_t.to_int (c (Fd_send_recv.int_of_fd fd) buf (Size_t.of_int count))
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"read",""))
 
 external unix_unistd_close_ptr : unit -> int64 = "unix_unistd_close_ptr"
 
@@ -53,7 +57,9 @@ let close =
   let c = local ~check_errno:true (unix_unistd_close_ptr ())
     PosixTypes.(int @-> returning int)
   in
-  fun fd -> ignore (c (Fd_send_recv.int_of_fd fd))
+  fun fd ->
+    try ignore (c (Fd_send_recv.int_of_fd fd))
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"close",""))
 
 external unix_unistd_access_ptr : unit -> int64 = "unix_unistd_access_ptr"
 
@@ -61,7 +67,9 @@ let access =
   let c = local ~check_errno:true (unix_unistd_access_ptr ())
     PosixTypes.(string @-> Access.(view ~host) @-> returning int)
   in
-  fun pathname mode -> ignore (c pathname mode)
+  fun pathname mode ->
+    try ignore (c pathname mode)
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"access",pathname))
 
 external unix_unistd_readlink_ptr : unit -> int64 = "unix_unistd_readlink_ptr"
 
@@ -70,16 +78,18 @@ let readlink =
     PosixTypes.(string @-> ptr void @-> size_t @-> returning size_t)
   in
   fun path ->
-    let sz = ref (Sysconf.(pagesize ~host)) in
-    let buf = ref (allocate_n uint8_t ~count:!sz) in
-    let len = ref Size_t.(to_int (c path (to_voidp !buf) (of_int !sz))) in
-    while !len = !sz do
-      sz  := !sz * 2;
-      buf := allocate_n uint8_t ~count:!sz;
-      len := Size_t.(to_int (c path (to_voidp !buf) (of_int !sz)))
-    done;
-    CArray.(set (from_ptr !buf (!len+1)) !len (UInt8.of_int 0));
-    coerce (ptr uint8_t) string !buf
+    try
+      let sz = ref (Sysconf.(pagesize ~host)) in
+      let buf = ref (allocate_n uint8_t ~count:!sz) in
+      let len = ref Size_t.(to_int (c path (to_voidp !buf) (of_int !sz))) in
+      while !len = !sz do
+        sz  := !sz * 2;
+        buf := allocate_n uint8_t ~count:!sz;
+        len := Size_t.(to_int (c path (to_voidp !buf) (of_int !sz)))
+      done;
+      CArray.(set (from_ptr !buf (!len+1)) !len (UInt8.of_int 0));
+      coerce (ptr uint8_t) string !buf
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"readlink",path))
 
 external unix_unistd_symlink_ptr : unit -> int64 = "unix_unistd_symlink_ptr"
 
@@ -87,4 +97,6 @@ let symlink =
   let c = local ~check_errno:true (unix_unistd_symlink_ptr ())
     PosixTypes.(string @-> string @-> returning int)
   in
-  fun source dest -> ignore (c source dest)
+  fun source dest ->
+    try ignore (c source dest)
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"symlink",dest))
