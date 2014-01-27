@@ -36,3 +36,9 @@ val close : Unix.file_descr -> unit
 
 (** Can raise Unix.Unix_error *)
 val access : string -> Access.t list -> unit
+
+(** Can raise Unix.Unix_error *)
+val readlink : string -> string
+
+(** Can raise Unix.Unix_error *)
+val symlink : string -> string -> unit

@@ -81,3 +81,27 @@ int unix_unistd_access(const char *pathname, int mode) {
 value unix_unistd_access_ptr(value _) {
   return caml_copy_int64((intptr_t)(void *)unix_unistd_access);
 }
+
+ssize_t unix_unistd_readlink(const char *path, char *buf, size_t bufsiz) {
+  ssize_t retval;
+  caml_release_runtime_system();
+  retval = readlink(path, buf, bufsiz);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_readlink_ptr(value _) {
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_readlink);
+}
+
+int unix_unistd_symlink(const char *target, const char *linkpath) {
+  int retval;
+  caml_release_runtime_system();
+  retval = symlink(target, linkpath);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_symlink_ptr(value _) {
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_symlink);
+}

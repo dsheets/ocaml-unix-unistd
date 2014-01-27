@@ -62,3 +62,29 @@ let access =
     PosixTypes.(string @-> Access.(view ~host) @-> returning int)
   in
   fun pathname mode -> ignore (c pathname mode)
+
+external unix_unistd_readlink_ptr : unit -> int64 = "unix_unistd_readlink_ptr"
+
+let readlink =
+  let c = local ~check_errno:true (unix_unistd_readlink_ptr ())
+    PosixTypes.(string @-> ptr void @-> size_t @-> returning size_t)
+  in
+  fun path ->
+    let sz = ref (Sysconf.(pagesize ~host)) in
+    let buf = ref (allocate_n uint8_t ~count:!sz) in
+    let len = ref Size_t.(to_int (c path (to_voidp !buf) (of_int !sz))) in
+    while !len = !sz do
+      sz  := !sz * 2;
+      buf := allocate_n uint8_t ~count:!sz;
+      len := Size_t.(to_int (c path (to_voidp !buf) (of_int !sz)))
+    done;
+    CArray.(set (from_ptr !buf (!len+1)) !len (UInt8.of_int 0));
+    coerce (ptr uint8_t) string !buf
+
+external unix_unistd_symlink_ptr : unit -> int64 = "unix_unistd_symlink_ptr"
+
+let symlink =
+  let c = local ~check_errno:true (unix_unistd_symlink_ptr ())
+    PosixTypes.(string @-> string @-> returning int)
+  in
+  fun source dest -> ignore (c source dest)
