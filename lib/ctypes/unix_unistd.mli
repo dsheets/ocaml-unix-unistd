@@ -42,3 +42,9 @@ val readlink : string -> string
 
 (** Can raise Unix.Unix_error *)
 val symlink : string -> string -> unit
+
+(** Can raise Unix.Unix_error *)
+val truncate : string -> int64 -> unit
+
+(** Can raise Unix.Unix_error *)
+val ftruncate : Unix.file_descr -> int64 -> unit

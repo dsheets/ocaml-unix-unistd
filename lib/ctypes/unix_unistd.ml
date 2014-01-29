@@ -32,6 +32,8 @@ open Unsigned
 let local ?check_errno addr typ =
   coerce (ptr void) (funptr ?check_errno typ) (ptr_of_raw_address addr)
 
+let to_off_t = coerce int64_t PosixTypes.off_t
+
 let write =
   let c = foreign ~check_errno:true "write"
     PosixTypes.(int @-> ptr void @-> size_t @-> returning size_t) in
@@ -100,3 +102,23 @@ let symlink =
   fun source dest ->
     try ignore (c source dest)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"symlink",dest))
+
+external unix_unistd_truncate_ptr : unit -> int64 = "unix_unistd_truncate_ptr"
+
+let truncate =
+  let c = local ~check_errno:true (unix_unistd_truncate_ptr ())
+    PosixTypes.(string @-> off_t @-> returning int)
+  in
+  fun path length ->
+    try ignore (c path (to_off_t length))
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"truncate",path))
+
+external unix_unistd_ftruncate_ptr : unit -> int64 = "unix_unistd_ftruncate_ptr"
+
+let ftruncate =
+  let c = local ~check_errno:true (unix_unistd_ftruncate_ptr ())
+    PosixTypes.(int @-> off_t @-> returning int)
+  in
+  fun fd length ->
+    try ignore (c (Fd_send_recv.int_of_fd fd) (to_off_t length))
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"ftruncate",""))

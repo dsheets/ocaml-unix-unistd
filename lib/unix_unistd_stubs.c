@@ -105,3 +105,27 @@ int unix_unistd_symlink(const char *target, const char *linkpath) {
 value unix_unistd_symlink_ptr(value _) {
   return caml_copy_int64((intptr_t)(void *)unix_unistd_symlink);
 }
+
+int unix_unistd_truncate(const char *path, off_t length) {
+  int retval;
+  caml_release_runtime_system();
+  retval = truncate(path, length);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_truncate_ptr(value _) {
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_truncate);
+}
+
+int unix_unistd_ftruncate(int fd, off_t length) {
+  int retval;
+  caml_release_runtime_system();
+  retval = ftruncate(fd, length);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_ftruncate_ptr(value _) {
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_ftruncate);
+}
