@@ -9,16 +9,18 @@ HAS_CTYPES := $(shell ocamlfind query ctypes.foreign fd-send-recv > /dev/null; e
 ifneq ($(HAS_CTYPES),0)
 SRC=lib/no_ctypes
 FLAGS=
-EXTRA_META=
+EXTRA_META=requires = \"unix\"
 else
 SRC=lib/ctypes
 FLAGS=-package ctypes.foreign -package fd-send-recv
-EXTRA_META=requires = \"ctypes.foreign fd-send-recv\"
+EXTRA_META=requires = \"unix ctypes.foreign fd-send-recv\"
 endif
+
+CFLAGS=-fPIC -Wall -Werror
 
 build:
 	mkdir -p $(BUILD)
-	cc -c -fPIC -o $(BUILD)/$(MOD_NAME)_stubs.o lib/$(MOD_NAME)_stubs.c
+	cc -c $(CFLAGS) -o $(BUILD)/$(MOD_NAME)_stubs.o lib/$(MOD_NAME)_stubs.c
 	ocamlfind ocamlc -o $(BUILD)/$(MOD_NAME)_common.cmi \
 		-c lib/$(MOD_NAME)_common.mli
 	ocamlfind ocamlc -o $(BUILD)/$(MOD_NAME).cmi -I $(BUILD) -I lib \
