@@ -16,7 +16,7 @@ FLAGS=-package ctypes.foreign -package fd-send-recv
 EXTRA_META=requires = \"unix ctypes.foreign fd-send-recv\"
 endif
 
-CFLAGS=-fPIC -Wall -Werror
+CFLAGS=-fPIC -Wall -Wextra -Werror -std=c99
 
 build:
 	mkdir -p $(BUILD)

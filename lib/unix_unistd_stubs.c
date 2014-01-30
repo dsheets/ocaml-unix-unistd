@@ -15,12 +15,16 @@
  *
  */
 
+#define _BSD_SOURCE
+
 #include <stdint.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/threads.h>
+
+#define UNUSED(x) (void)(x)
 
 #ifndef R_OK
 #error "unix_unistd_stubs.c: R_OK macro not found"
@@ -55,6 +59,7 @@ ssize_t unix_unistd_read(int fd, void *buf, size_t count) {
 }
 
 value unix_unistd_read_ptr(value _) {
+  UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_read);
 }
 
@@ -67,6 +72,7 @@ int unix_unistd_close(int fd) {
 }
 
 value unix_unistd_close_ptr(value _) {
+  UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_close);
 }
 
@@ -79,6 +85,7 @@ int unix_unistd_access(const char *pathname, int mode) {
 }
 
 value unix_unistd_access_ptr(value _) {
+  UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_access);
 }
 
@@ -91,6 +98,7 @@ ssize_t unix_unistd_readlink(const char *path, char *buf, size_t bufsiz) {
 }
 
 value unix_unistd_readlink_ptr(value _) {
+  UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_readlink);
 }
 
@@ -103,6 +111,7 @@ int unix_unistd_symlink(const char *target, const char *linkpath) {
 }
 
 value unix_unistd_symlink_ptr(value _) {
+  UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_symlink);
 }
 
@@ -115,6 +124,7 @@ int unix_unistd_truncate(const char *path, off_t length) {
 }
 
 value unix_unistd_truncate_ptr(value _) {
+  UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_truncate);
 }
 
@@ -127,6 +137,7 @@ int unix_unistd_ftruncate(int fd, off_t length) {
 }
 
 value unix_unistd_ftruncate_ptr(value _) {
+  UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_ftruncate);
 }
 
@@ -139,6 +150,7 @@ int unix_unistd_chown(const char *path, uid_t owner, gid_t group) {
 }
 
 value unix_unistd_chown_ptr(value _) {
+  UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_chown);
 }
 
@@ -151,6 +163,7 @@ int unix_unistd_fchown(int fd, uid_t owner, gid_t group) {
 }
 
 value unix_unistd_fchown_ptr(value _) {
+  UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_fchown);
 }
 
@@ -163,5 +176,6 @@ int unix_unistd_seteuid(uid_t uid) {
 }
 
 value unix_unistd_seteuid_ptr(value _) {
+  UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_seteuid);
 }
