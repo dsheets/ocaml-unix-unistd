@@ -25,6 +25,8 @@ module Sysconf : sig
   include module type of Unix_unistd_common.Sysconf
 end
 
+(** Filesystem functions *)
+
 (** Can raise Unix.Unix_error *)
 val write : Unix.file_descr -> unit Ctypes.ptr -> int -> int
 
@@ -48,3 +50,14 @@ val truncate : string -> int64 -> unit
 
 (** Can raise Unix.Unix_error *)
 val ftruncate : Unix.file_descr -> int64 -> unit
+
+(** Can raise Unix.Unix_error *)
+val chown : string -> int -> int -> unit
+
+(** Can raise Unix.Unix_error *)
+val fchown : Unix.file_descr -> int -> int -> unit
+
+(** Process functions *)
+
+(** Can raise Unix.Unix_error *)
+val seteuid : int -> unit

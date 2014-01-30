@@ -33,6 +33,12 @@ let local ?check_errno addr typ =
   coerce (ptr void) (funptr ?check_errno typ) (ptr_of_raw_address addr)
 
 let to_off_t = coerce int64_t PosixTypes.off_t
+let to_uid_t = let c = coerce uint32_t PosixTypes.uid_t in
+               fun i -> c (UInt32.of_int i)
+let to_gid_t = let c = coerce uint32_t PosixTypes.gid_t in
+               fun i -> c (UInt32.of_int i)
+
+(* Filesystem functions *)
 
 let write =
   let c = foreign ~check_errno:true "write"
@@ -122,3 +128,35 @@ let ftruncate =
   fun fd length ->
     try ignore (c (Fd_send_recv.int_of_fd fd) (to_off_t length))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"ftruncate",""))
+
+external unix_unistd_chown_ptr : unit -> int64 = "unix_unistd_chown_ptr"
+
+let chown =
+  let c = local ~check_errno:true (unix_unistd_chown_ptr ())
+    PosixTypes.(string @-> uid_t @-> gid_t @-> returning int)
+  in
+  fun path owner group ->
+    try ignore (c path (to_uid_t owner) (to_gid_t group))
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"chown",path))
+
+external unix_unistd_fchown_ptr : unit -> int64 = "unix_unistd_fchown_ptr"
+
+let fchown =
+  let c = local ~check_errno:true (unix_unistd_fchown_ptr ())
+    PosixTypes.(int @-> uid_t @-> gid_t @-> returning int)
+  in
+  fun fd owner group ->
+    try ignore (c (Fd_send_recv.int_of_fd fd) (to_uid_t owner) (to_gid_t group))
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"fchown",""))
+
+(* Process functions *)
+
+external unix_unistd_seteuid_ptr : unit -> int64 = "unix_unistd_seteuid_ptr"
+
+let seteuid =
+  let c = local ~check_errno:true (unix_unistd_seteuid_ptr ())
+    PosixTypes.(uid_t @-> returning int)
+  in
+  fun uid ->
+    try ignore (c (to_uid_t uid))
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"seteuid",""))

@@ -129,3 +129,39 @@ int unix_unistd_ftruncate(int fd, off_t length) {
 value unix_unistd_ftruncate_ptr(value _) {
   return caml_copy_int64((intptr_t)(void *)unix_unistd_ftruncate);
 }
+
+int unix_unistd_chown(const char *path, uid_t owner, gid_t group) {
+  int retval;
+  caml_release_runtime_system();
+  retval = chown(path, owner, group);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_chown_ptr(value _) {
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_chown);
+}
+
+int unix_unistd_fchown(int fd, uid_t owner, gid_t group) {
+  int retval;
+  caml_release_runtime_system();
+  retval = fchown(fd, owner, group);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_fchown_ptr(value _) {
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_fchown);
+}
+
+int unix_unistd_seteuid(uid_t uid) {
+  int retval;
+  caml_release_runtime_system();
+  retval = seteuid(uid);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_seteuid_ptr(value _) {
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_seteuid);
+}
