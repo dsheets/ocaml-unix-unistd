@@ -34,9 +34,9 @@ let local ?check_errno addr typ =
 
 let to_off_t = coerce int64_t PosixTypes.off_t
 let to_uid_t = let c = coerce uint32_t PosixTypes.uid_t in
-               fun i -> c (UInt32.of_int i)
+               fun i -> c (UInt32.of_int32 i)
 let to_gid_t = let c = coerce uint32_t PosixTypes.gid_t in
-               fun i -> c (UInt32.of_int i)
+               fun i -> c (UInt32.of_int32 i)
 
 (* Filesystem functions *)
 
@@ -160,3 +160,13 @@ let seteuid =
   fun uid ->
     try ignore (c (to_uid_t uid))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"seteuid",""))
+
+external unix_unistd_setegid_ptr : unit -> int64 = "unix_unistd_setegid_ptr"
+
+let setegid =
+  let c = local ~check_errno:true (unix_unistd_setegid_ptr ())
+    PosixTypes.(gid_t @-> returning int)
+  in
+  fun gid ->
+    try ignore (c (to_gid_t gid))
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"setegid",""))

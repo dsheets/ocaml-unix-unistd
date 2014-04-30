@@ -179,3 +179,16 @@ value unix_unistd_seteuid_ptr(value _) {
   UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_seteuid);
 }
+
+int unix_unistd_setegid(gid_t gid) {
+  int retval;
+  caml_release_runtime_system();
+  retval = setegid(gid);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_setegid_ptr(value _) {
+  UNUSED(_);
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_setegid);
+}
