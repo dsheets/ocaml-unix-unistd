@@ -35,3 +35,8 @@ module Sysconf : sig
   val pagesize : host:host -> int
 end
 
+type host = {
+  access  : Access.host;
+  sysconf : Sysconf.host;
+}
+val host : host

@@ -25,6 +25,15 @@ module Sysconf = struct
   include Unix_unistd_common.Sysconf
 end
 
+type host = {
+  access  : Access.host;
+  sysconf : Sysconf.host;
+}
+let host = {
+  access  = Access.host;
+  sysconf = Sysconf.host;
+}
+
 open Ctypes
 open Foreign
 open Unsigned

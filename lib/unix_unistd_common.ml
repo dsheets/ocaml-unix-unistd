@@ -76,3 +76,12 @@ module Sysconf = struct
 
   let pagesize ~host = host.pagesize
 end
+
+type host = {
+  access  : Access.host;
+  sysconf : Sysconf.host;
+}
+let host = {
+  access  = Access.host;
+  sysconf = Sysconf.host;
+}

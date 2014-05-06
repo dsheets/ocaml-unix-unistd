@@ -25,6 +25,12 @@ module Sysconf : sig
   include module type of Unix_unistd_common.Sysconf
 end
 
+type host = {
+  access  : Access.host;
+  sysconf : Sysconf.host;
+}
+val host : host
+
 (** Filesystem functions *)
 
 (** Can raise Unix.Unix_error *)
