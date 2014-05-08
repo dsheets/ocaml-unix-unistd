@@ -34,6 +34,12 @@ val host : host
 (** Filesystem functions *)
 
 (** Can raise Unix.Unix_error *)
+val unlink : string -> unit
+
+(** Can raise Unix.Unix_error *)
+val rmdir : string -> unit
+
+(** Can raise Unix.Unix_error *)
 val write : Unix.file_descr -> unit Ctypes.ptr -> int -> int
 
 (** Can raise Unix.Unix_error *)

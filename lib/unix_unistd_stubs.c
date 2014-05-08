@@ -50,6 +50,45 @@ CAMLprim value unix_unistd_f_ok() { return Val_int(F_OK); }
 
 CAMLprim value unix_unistd_pagesize() { return sysconf(_SC_PAGESIZE); }
 
+int unix_unistd_rmdir(const char *pathname) {
+  int retval;
+  caml_release_runtime_system();
+  retval = rmdir(pathname);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_rmdir_ptr(value _) {
+  UNUSED(_);
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_rmdir);
+}
+
+int unix_unistd_unlink(const char *pathname) {
+  int retval;
+  caml_release_runtime_system();
+  retval = unlink(pathname);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_unlink_ptr(value _) {
+  UNUSED(_);
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_unlink);
+}
+
+ssize_t unix_unistd_write(int fd, void *buf, size_t count) {
+  ssize_t retval;
+  caml_release_runtime_system();
+  retval = write(fd, buf, count);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_write_ptr(value _) {
+  UNUSED(_);
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_write);
+}
+
 ssize_t unix_unistd_read(int fd, void *buf, size_t count) {
   ssize_t retval;
   caml_release_runtime_system();

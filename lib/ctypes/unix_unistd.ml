@@ -49,9 +49,32 @@ let to_gid_t = let c = coerce uint32_t PosixTypes.gid_t in
 
 (* Filesystem functions *)
 
+external unix_unistd_unlink_ptr : unit -> int64 = "unix_unistd_unlink_ptr"
+
+let unlink =
+  let c = local ~check_errno:true (unix_unistd_unlink_ptr ())
+    PosixTypes.(string @-> returning int)
+  in
+  fun pathname ->
+    try ignore (c pathname)
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"unlink",pathname))
+
+external unix_unistd_rmdir_ptr : unit -> int64 = "unix_unistd_rmdir_ptr"
+
+let rmdir =
+  let c = local ~check_errno:true (unix_unistd_rmdir_ptr ())
+    PosixTypes.(string @-> returning int)
+  in
+  fun pathname ->
+    try ignore (c pathname)
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"rmdir",pathname))
+
+external unix_unistd_write_ptr : unit -> int64 = "unix_unistd_write_ptr"
+
 let write =
-  let c = foreign ~check_errno:true "write"
-    PosixTypes.(int @-> ptr void @-> size_t @-> returning size_t) in
+  let c = local ~check_errno:true (unix_unistd_write_ptr ())
+    PosixTypes.(int @-> ptr void @-> size_t @-> returning size_t)
+  in
   fun fd buf count ->
     try
       Size_t.to_int (c (Fd_send_recv.int_of_fd fd) buf (Size_t.of_int count))
