@@ -71,7 +71,7 @@ let lseek =
     PosixTypes.(fd @-> off_t @-> cmd @-> returning off_t)
   in
   fun fd offset whence ->
-    let offset = to_off_t (Int64.of_int offset) in
+    let offset = to_off_t offset in
     try coerce PosixTypes.off_t int64_t (c fd offset whence)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"lseek",""))
 
@@ -113,7 +113,7 @@ let pwrite =
     PosixTypes.(fd @-> ptr void @-> size_t @-> off_t @-> returning size_t)
   in
   fun fd buf count offset ->
-    let offset = to_off_t (Int64.of_int offset) in
+    let offset = to_off_t offset in
     try
       Size_t.to_int (c fd buf (Size_t.of_int count) offset)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"pwrite",""))
@@ -136,7 +136,7 @@ let pread =
     PosixTypes.(fd @-> ptr void @-> size_t @-> off_t @-> returning size_t)
   in
   fun fd buf count offset ->
-    let offset = to_off_t (Int64.of_int offset) in
+    let offset = to_off_t offset in
     try
       Size_t.to_int (c fd buf (Size_t.of_int count) offset)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"pread",""))

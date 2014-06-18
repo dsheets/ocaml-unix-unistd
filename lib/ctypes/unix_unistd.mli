@@ -39,7 +39,7 @@ val host : host
 (** Filesystem functions *)
 
 (** Can raise Unix.Unix_error *)
-val lseek : Unix.file_descr -> int -> Seek.t -> int64
+val lseek : Unix.file_descr -> int64 -> Seek.t -> int64
 
 (** Can raise Unix.Unix_error *)
 val unlink : string -> unit
@@ -51,13 +51,13 @@ val rmdir : string -> unit
 val write : Unix.file_descr -> unit Ctypes.ptr -> int -> int
 
 (** Can raise Unix.Unix_error *)
-val pwrite : Unix.file_descr -> unit Ctypes.ptr -> int -> int -> int
+val pwrite : Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int
 
 (** Can raise Unix.Unix_error *)
 val read : Unix.file_descr -> unit Ctypes.ptr -> int -> int
 
 (** Can raise Unix.Unix_error *)
-val pread : Unix.file_descr -> unit Ctypes.ptr -> int -> int -> int
+val pread : Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int
 
 (** Can raise Unix.Unix_error *)
 val close : Unix.file_descr -> unit
