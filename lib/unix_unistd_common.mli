@@ -27,6 +27,16 @@ module Access : sig
   val set : host:host -> t -> int -> int
 end
 
+module Seek : sig
+  type t = SEEK_SET | SEEK_CUR | SEEK_END | SEEK_DATA | SEEK_HOLE
+
+  type host
+  val to_code : host:host -> t -> int option
+  val host : host
+  val of_code_exn : host:host -> int -> t
+  val of_code : host:host -> int -> t option
+end
+
 module Sysconf : sig
   type host
 
@@ -37,6 +47,7 @@ end
 
 type host = {
   access  : Access.host;
+  seek    : Seek.host;
   sysconf : Sysconf.host;
 }
 val host : host

@@ -63,6 +63,66 @@ module Access = struct
 
 end
 
+module Seek = struct
+  type t = SEEK_SET | SEEK_CUR | SEEK_END | SEEK_DATA | SEEK_HOLE
+
+  external seek_set  : unit -> int = "unix_unistd_seek_set"  "noalloc"
+  external seek_cur  : unit -> int = "unix_unistd_seek_cur"  "noalloc"
+  external seek_end  : unit -> int = "unix_unistd_seek_end"  "noalloc"
+  external seek_data : unit -> int = "unix_unistd_seek_data" "noalloc"
+  external seek_hole : unit -> int = "unix_unistd_seek_hole" "noalloc"
+
+  type defns = {
+    seek_set  : int;
+    seek_cur  : int;
+    seek_end  : int;
+    seek_data : int option;
+    seek_hole : int option;
+  }
+
+  type index = (int, t) Hashtbl.t
+  type host = defns * index
+
+  let to_code ~host = let (defns,_) = host in function
+    | SEEK_SET  -> Some defns.seek_set
+    | SEEK_CUR  -> Some defns.seek_cur
+    | SEEK_END  -> Some defns.seek_end
+    | SEEK_DATA -> defns.seek_data
+    | SEEK_HOLE -> defns.seek_hole
+
+  let index_of_defns defns =
+    let open Hashtbl in
+    let h = create 10 in
+    replace h defns.seek_set  SEEK_SET;
+    replace h defns.seek_cur  SEEK_CUR;
+    replace h defns.seek_end  SEEK_END;
+    (match defns.seek_data with Some i -> replace h i SEEK_DATA | None -> ());
+    (match defns.seek_hole with Some i -> replace h i SEEK_HOLE | None -> ());
+    h
+
+  let host =
+    let check f name = match f () with
+      | -1 -> raise (Failure ("<unistd.h> macro "^name^" missing"))
+      | x -> x
+    in
+    let optional f = match f () with -1 -> None | x -> Some x in
+    let defns = {
+      seek_set  = check seek_set  "SEEK_SET";
+      seek_cur  = check seek_cur  "SEEK_CUR";
+      seek_end  = check seek_end  "SEEK_END";
+      seek_data = optional seek_data;
+      seek_hole = optional seek_hole;
+    } in
+    (defns,index_of_defns defns)
+
+  let of_code_exn ~host code =
+    let (_,index) = host in
+    Hashtbl.find index code
+
+  let of_code ~host code =
+    try Some (of_code_exn ~host code) with Not_found -> None
+end
+
 module Sysconf = struct
   external pagesize : unit -> int = "unix_unistd_pagesize" "noalloc"
 
@@ -79,9 +139,11 @@ end
 
 type host = {
   access  : Access.host;
+  seek    : Seek.host;
   sysconf : Sysconf.host;
 }
 let host = {
   access  = Access.host;
+  seek    = Seek.host;
   sysconf = Sysconf.host;
 }

@@ -21,17 +21,25 @@ module Access : sig
   val view : host:host -> t list Ctypes.typ
 end
 
+module Seek : sig
+  include module type of Unix_unistd_common.Seek
+end
+
 module Sysconf : sig
   include module type of Unix_unistd_common.Sysconf
 end
 
 type host = {
   access  : Access.host;
+  seek    : Seek.host;
   sysconf : Sysconf.host;
 }
 val host : host
 
 (** Filesystem functions *)
+
+(** Can raise Unix.Unix_error *)
+val lseek : Unix.file_descr -> int -> Seek.t -> int64
 
 (** Can raise Unix.Unix_error *)
 val unlink : string -> unit
@@ -43,7 +51,13 @@ val rmdir : string -> unit
 val write : Unix.file_descr -> unit Ctypes.ptr -> int -> int
 
 (** Can raise Unix.Unix_error *)
+val pwrite : Unix.file_descr -> unit Ctypes.ptr -> int -> int -> int
+
+(** Can raise Unix.Unix_error *)
 val read : Unix.file_descr -> unit Ctypes.ptr -> int -> int
+
+(** Can raise Unix.Unix_error *)
+val pread : Unix.file_descr -> unit Ctypes.ptr -> int -> int -> int
 
 (** Can raise Unix.Unix_error *)
 val close : Unix.file_descr -> unit

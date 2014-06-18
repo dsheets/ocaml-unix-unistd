@@ -16,6 +16,8 @@
  */
 
 #define _BSD_SOURCE
+#define _XOPEN_SOURCE 600
+#define _GNU_SOURCE // includes the previous feature macros on Linux
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -39,6 +41,22 @@
 #error "unix_unistd_stubs.c: F_OK macro not found"
 #endif
 
+#ifndef SEEK_SET
+#error "unix_unistd_stubs.c: SEEK_SET macro not found"
+#endif
+#ifndef SEEK_CUR
+#error "unix_unistd_stubs.c: SEEK_CUR macro not found"
+#endif
+#ifndef SEEK_END
+#error "unix_unistd_stubs.c: SEEK_END macro not found"
+#endif
+#ifndef SEEK_DATA
+#define SEEK_DATA (-1)
+#endif
+#ifndef SEEK_HOLE
+#define SEEK_HOLE (-1)
+#endif
+
 #ifndef _SC_PAGESIZE
 #error "unix_unistd_stubs.c: _SC_PAGESIZE macro not found"
 #endif
@@ -48,7 +66,26 @@ CAMLprim value unix_unistd_w_ok() { return Val_int(W_OK); }
 CAMLprim value unix_unistd_x_ok() { return Val_int(X_OK); }
 CAMLprim value unix_unistd_f_ok() { return Val_int(F_OK); }
 
+CAMLprim value unix_unistd_seek_set()  { return Val_int(SEEK_SET); }
+CAMLprim value unix_unistd_seek_cur()  { return Val_int(SEEK_CUR); }
+CAMLprim value unix_unistd_seek_end()  { return Val_int(SEEK_END); }
+CAMLprim value unix_unistd_seek_data() { return Val_int(SEEK_DATA); }
+CAMLprim value unix_unistd_seek_hole() { return Val_int(SEEK_HOLE); }
+
 CAMLprim value unix_unistd_pagesize() { return sysconf(_SC_PAGESIZE); }
+
+int unix_unistd_lseek(int fd, off_t offset, int whence) {
+  int retval;
+  caml_release_runtime_system();
+  retval = lseek(fd, offset, whence);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_lseek_ptr(value _) {
+  UNUSED(_);
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_lseek);
+}
 
 int unix_unistd_rmdir(const char *pathname) {
   int retval;
@@ -89,6 +126,19 @@ value unix_unistd_write_ptr(value _) {
   return caml_copy_int64((intptr_t)(void *)unix_unistd_write);
 }
 
+ssize_t unix_unistd_pwrite(int fd, void *buf, size_t count, off_t offset) {
+  ssize_t retval;
+  caml_release_runtime_system();
+  retval = pwrite(fd, buf, count, offset);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_pwrite_ptr(value _) {
+  UNUSED(_);
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_pwrite);
+}
+
 ssize_t unix_unistd_read(int fd, void *buf, size_t count) {
   ssize_t retval;
   caml_release_runtime_system();
@@ -100,6 +150,19 @@ ssize_t unix_unistd_read(int fd, void *buf, size_t count) {
 value unix_unistd_read_ptr(value _) {
   UNUSED(_);
   return caml_copy_int64((intptr_t)(void *)unix_unistd_read);
+}
+
+ssize_t unix_unistd_pread(int fd, void *buf, size_t count, off_t offset) {
+  ssize_t retval;
+  caml_release_runtime_system();
+  retval = pread(fd, buf, count, offset);
+  caml_acquire_runtime_system();
+  return retval;
+}
+
+value unix_unistd_pread_ptr(value _) {
+  UNUSED(_);
+  return caml_copy_int64((intptr_t)(void *)unix_unistd_pread);
 }
 
 int unix_unistd_close(int fd) {

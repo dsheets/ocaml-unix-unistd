@@ -21,16 +21,22 @@ module Access = struct
   let view ~host = Ctypes.(view ~read:(of_code ~host) ~write:(to_code ~host) int)
 end
 
+module Seek = struct
+  include Unix_unistd_common.Seek
+end
+
 module Sysconf = struct
   include Unix_unistd_common.Sysconf
 end
 
 type host = {
   access  : Access.host;
+  seek    : Seek.host;
   sysconf : Sysconf.host;
 }
 let host = {
   access  = Access.host;
+  seek    = Seek.host;
   sysconf = Sysconf.host;
 }
 
@@ -47,7 +53,27 @@ let to_uid_t = let c = coerce uint32_t PosixTypes.uid_t in
 let to_gid_t = let c = coerce uint32_t PosixTypes.gid_t in
                fun i -> c (UInt32.of_int32 i)
 
+let fd = Fd_send_recv.(view ~read:fd_of_int ~write:int_of_fd int)
+
 (* Filesystem functions *)
+
+external unix_unistd_lseek_ptr : unit -> int64 = "unix_unistd_lseek_ptr"
+
+let lseek =
+  let cmd =
+    let write cmd = match Seek.(to_code ~host cmd) with
+      | Some code -> code
+      | None -> raise Unix.(Unix_error (EINVAL,"lseek",""))
+    in
+    Ctypes.(view ~read:Seek.(of_code_exn ~host) ~write int)
+  in
+  let c = local ~check_errno:true (unix_unistd_lseek_ptr ())
+    PosixTypes.(fd @-> off_t @-> cmd @-> returning off_t)
+  in
+  fun fd offset whence ->
+    let offset = to_off_t (Int64.of_int offset) in
+    try coerce PosixTypes.off_t int64_t (c fd offset whence)
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"lseek",""))
 
 external unix_unistd_unlink_ptr : unit -> int64 = "unix_unistd_unlink_ptr"
 
@@ -73,32 +99,56 @@ external unix_unistd_write_ptr : unit -> int64 = "unix_unistd_write_ptr"
 
 let write =
   let c = local ~check_errno:true (unix_unistd_write_ptr ())
-    PosixTypes.(int @-> ptr void @-> size_t @-> returning size_t)
+    PosixTypes.(fd @-> ptr void @-> size_t @-> returning size_t)
   in
   fun fd buf count ->
     try
-      Size_t.to_int (c (Fd_send_recv.int_of_fd fd) buf (Size_t.of_int count))
+      Size_t.to_int (c fd buf (Size_t.of_int count))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"write",""))
+
+external unix_unistd_pwrite_ptr : unit -> int64 = "unix_unistd_pwrite_ptr"
+
+let pwrite =
+  let c = local ~check_errno:true (unix_unistd_pwrite_ptr ())
+    PosixTypes.(fd @-> ptr void @-> size_t @-> off_t @-> returning size_t)
+  in
+  fun fd buf count offset ->
+    let offset = to_off_t (Int64.of_int offset) in
+    try
+      Size_t.to_int (c fd buf (Size_t.of_int count) offset)
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"pwrite",""))
 
 external unix_unistd_read_ptr : unit -> int64 = "unix_unistd_read_ptr"
 
 let read =
   let c = local ~check_errno:true (unix_unistd_read_ptr ())
-    PosixTypes.(int @-> ptr void @-> size_t @-> returning size_t)
+    PosixTypes.(fd @-> ptr void @-> size_t @-> returning size_t)
   in
   fun fd buf count ->
     try
-      Size_t.to_int (c (Fd_send_recv.int_of_fd fd) buf (Size_t.of_int count))
+      Size_t.to_int (c fd buf (Size_t.of_int count))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"read",""))
+
+external unix_unistd_pread_ptr : unit -> int64 = "unix_unistd_pread_ptr"
+
+let pread =
+  let c = local ~check_errno:true (unix_unistd_pread_ptr ())
+    PosixTypes.(fd @-> ptr void @-> size_t @-> off_t @-> returning size_t)
+  in
+  fun fd buf count offset ->
+    let offset = to_off_t (Int64.of_int offset) in
+    try
+      Size_t.to_int (c fd buf (Size_t.of_int count) offset)
+    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"pread",""))
 
 external unix_unistd_close_ptr : unit -> int64 = "unix_unistd_close_ptr"
 
 let close =
   let c = local ~check_errno:true (unix_unistd_close_ptr ())
-    PosixTypes.(int @-> returning int)
+    PosixTypes.(fd @-> returning int)
   in
   fun fd ->
-    try ignore (c (Fd_send_recv.int_of_fd fd))
+    try ignore (c fd)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"close",""))
 
 external unix_unistd_access_ptr : unit -> int64 = "unix_unistd_access_ptr"
@@ -155,10 +205,10 @@ external unix_unistd_ftruncate_ptr : unit -> int64 = "unix_unistd_ftruncate_ptr"
 
 let ftruncate =
   let c = local ~check_errno:true (unix_unistd_ftruncate_ptr ())
-    PosixTypes.(int @-> off_t @-> returning int)
+    PosixTypes.(fd @-> off_t @-> returning int)
   in
   fun fd length ->
-    try ignore (c (Fd_send_recv.int_of_fd fd) (to_off_t length))
+    try ignore (c fd (to_off_t length))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"ftruncate",""))
 
 external unix_unistd_chown_ptr : unit -> int64 = "unix_unistd_chown_ptr"
@@ -175,10 +225,10 @@ external unix_unistd_fchown_ptr : unit -> int64 = "unix_unistd_fchown_ptr"
 
 let fchown =
   let c = local ~check_errno:true (unix_unistd_fchown_ptr ())
-    PosixTypes.(int @-> uid_t @-> gid_t @-> returning int)
+    PosixTypes.(fd @-> uid_t @-> gid_t @-> returning int)
   in
   fun fd owner group ->
-    try ignore (c (Fd_send_recv.int_of_fd fd) (to_uid_t owner) (to_gid_t group))
+    try ignore (c fd (to_uid_t owner) (to_gid_t group))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"fchown",""))
 
 (* Process functions *)
