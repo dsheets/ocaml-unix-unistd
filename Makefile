@@ -4,7 +4,7 @@ FINDLIB_NAME=unix-unistd
 MOD_NAME=unix_unistd
 BUILD=_build/lib
 
-HAS_CTYPES := $(shell ocamlfind query ctypes.foreign fd-send-recv > /dev/null; echo $$?)
+HAS_CTYPES := 1 #$(shell ocamlfind query ctypes.foreign fd-send-recv > /dev/null; echo $$?)
 
 ifneq ($(HAS_CTYPES),0)
 SRC=lib/no_ctypes
