@@ -48,10 +48,9 @@ let local ?check_errno addr typ =
   coerce (ptr void) (funptr ?check_errno typ) (ptr_of_raw_address addr)
 
 let to_off_t = coerce int64_t PosixTypes.off_t
-let to_uid_t = let c = coerce uint32_t PosixTypes.uid_t in
-               fun i -> c (UInt32.of_int32 i)
-let to_gid_t = let c = coerce uint32_t PosixTypes.gid_t in
-               fun i -> c (UInt32.of_int32 i)
+
+let uid_t = uint32_t
+let gid_t = uint32_t
 
 let fd = Fd_send_recv.(view ~read:fd_of_int ~write:int_of_fd int)
 
