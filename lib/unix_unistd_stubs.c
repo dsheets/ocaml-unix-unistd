@@ -15,6 +15,7 @@
  *
  */
 
+#define _DEFAULT_SOURCE
 #define _BSD_SOURCE
 #define _XOPEN_SOURCE 600
 #define _GNU_SOURCE // includes the previous feature macros on Linux
