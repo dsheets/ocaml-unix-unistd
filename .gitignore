@@ -1,3 +1,6 @@
 *~
 _build
 META
+*.cmo
+*.cmx
+*.o

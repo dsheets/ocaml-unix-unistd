@@ -78,15 +78,15 @@ val truncate : string -> int64 -> unit
 val ftruncate : Unix.file_descr -> int64 -> unit
 
 (** Can raise Unix.Unix_error *)
-val chown : string -> int32 -> int32 -> unit
+val chown : string -> int -> int -> unit
 
 (** Can raise Unix.Unix_error *)
-val fchown : Unix.file_descr -> int32 -> int32 -> unit
+val fchown : Unix.file_descr -> int -> int -> unit
 
 (** Process functions *)
 
 (** Can raise Unix.Unix_error *)
-val seteuid : int32 -> unit
+val seteuid : int -> unit
 
 (** Can raise Unix.Unix_error *)
-val setegid : int32 -> unit
+val setegid : int -> unit

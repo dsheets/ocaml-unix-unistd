@@ -49,14 +49,16 @@ let local ?check_errno addr typ =
 
 let to_off_t = coerce int64_t PosixTypes.off_t
 
-let uid_t = uint32_t
-let gid_t = uint32_t
+module Uid = UInt
+let uid_t = uint
+module Gid = UInt
+let gid_t = uint
 
 let fd = Fd_send_recv.(view ~read:fd_of_int ~write:int_of_fd int)
 
 (* Filesystem functions *)
 
-external unix_unistd_lseek_ptr : unit -> int64 = "unix_unistd_lseek_ptr"
+external unix_unistd_lseek_ptr : unit -> nativeint = "unix_unistd_lseek_ptr"
 
 let lseek =
   let cmd =
@@ -74,7 +76,7 @@ let lseek =
     try coerce PosixTypes.off_t int64_t (c fd offset whence)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"lseek",""))
 
-external unix_unistd_unlink_ptr : unit -> int64 = "unix_unistd_unlink_ptr"
+external unix_unistd_unlink_ptr : unit -> nativeint = "unix_unistd_unlink_ptr"
 
 let unlink =
   let c = local ~check_errno:true (unix_unistd_unlink_ptr ())
@@ -84,7 +86,7 @@ let unlink =
     try ignore (c pathname)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"unlink",pathname))
 
-external unix_unistd_rmdir_ptr : unit -> int64 = "unix_unistd_rmdir_ptr"
+external unix_unistd_rmdir_ptr : unit -> nativeint = "unix_unistd_rmdir_ptr"
 
 let rmdir =
   let c = local ~check_errno:true (unix_unistd_rmdir_ptr ())
@@ -94,7 +96,7 @@ let rmdir =
     try ignore (c pathname)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"rmdir",pathname))
 
-external unix_unistd_write_ptr : unit -> int64 = "unix_unistd_write_ptr"
+external unix_unistd_write_ptr : unit -> nativeint = "unix_unistd_write_ptr"
 
 let write =
   let c = local ~check_errno:true (unix_unistd_write_ptr ())
@@ -105,7 +107,7 @@ let write =
       Size_t.to_int (c fd buf (Size_t.of_int count))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"write",""))
 
-external unix_unistd_pwrite_ptr : unit -> int64 = "unix_unistd_pwrite_ptr"
+external unix_unistd_pwrite_ptr : unit -> nativeint = "unix_unistd_pwrite_ptr"
 
 let pwrite =
   let c = local ~check_errno:true (unix_unistd_pwrite_ptr ())
@@ -117,7 +119,7 @@ let pwrite =
       Size_t.to_int (c fd buf (Size_t.of_int count) offset)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"pwrite",""))
 
-external unix_unistd_read_ptr : unit -> int64 = "unix_unistd_read_ptr"
+external unix_unistd_read_ptr : unit -> nativeint = "unix_unistd_read_ptr"
 
 let read =
   let c = local ~check_errno:true (unix_unistd_read_ptr ())
@@ -128,7 +130,7 @@ let read =
       Size_t.to_int (c fd buf (Size_t.of_int count))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"read",""))
 
-external unix_unistd_pread_ptr : unit -> int64 = "unix_unistd_pread_ptr"
+external unix_unistd_pread_ptr : unit -> nativeint = "unix_unistd_pread_ptr"
 
 let pread =
   let c = local ~check_errno:true (unix_unistd_pread_ptr ())
@@ -140,7 +142,7 @@ let pread =
       Size_t.to_int (c fd buf (Size_t.of_int count) offset)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"pread",""))
 
-external unix_unistd_close_ptr : unit -> int64 = "unix_unistd_close_ptr"
+external unix_unistd_close_ptr : unit -> nativeint = "unix_unistd_close_ptr"
 
 let close =
   let c = local ~check_errno:true (unix_unistd_close_ptr ())
@@ -150,7 +152,7 @@ let close =
     try ignore (c fd)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"close",""))
 
-external unix_unistd_access_ptr : unit -> int64 = "unix_unistd_access_ptr"
+external unix_unistd_access_ptr : unit -> nativeint = "unix_unistd_access_ptr"
 
 let access =
   let c = local ~check_errno:true (unix_unistd_access_ptr ())
@@ -160,7 +162,7 @@ let access =
     try ignore (c pathname mode)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"access",pathname))
 
-external unix_unistd_readlink_ptr : unit -> int64 = "unix_unistd_readlink_ptr"
+external unix_unistd_readlink_ptr : unit -> nativeint = "unix_unistd_readlink_ptr"
 
 let readlink =
   let c = local ~check_errno:true (unix_unistd_readlink_ptr ())
@@ -180,7 +182,7 @@ let readlink =
       coerce (ptr uint8_t) string !buf
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"readlink",path))
 
-external unix_unistd_symlink_ptr : unit -> int64 = "unix_unistd_symlink_ptr"
+external unix_unistd_symlink_ptr : unit -> nativeint = "unix_unistd_symlink_ptr"
 
 let symlink =
   let c = local ~check_errno:true (unix_unistd_symlink_ptr ())
@@ -190,7 +192,7 @@ let symlink =
     try ignore (c source dest)
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"symlink",dest))
 
-external unix_unistd_truncate_ptr : unit -> int64 = "unix_unistd_truncate_ptr"
+external unix_unistd_truncate_ptr : unit -> nativeint = "unix_unistd_truncate_ptr"
 
 let truncate =
   let c = local ~check_errno:true (unix_unistd_truncate_ptr ())
@@ -200,7 +202,7 @@ let truncate =
     try ignore (c path (to_off_t length))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"truncate",path))
 
-external unix_unistd_ftruncate_ptr : unit -> int64 = "unix_unistd_ftruncate_ptr"
+external unix_unistd_ftruncate_ptr : unit -> nativeint = "unix_unistd_ftruncate_ptr"
 
 let ftruncate =
   let c = local ~check_errno:true (unix_unistd_ftruncate_ptr ())
@@ -210,7 +212,10 @@ let ftruncate =
     try ignore (c fd (to_off_t length))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"ftruncate",""))
 
-external unix_unistd_chown_ptr : unit -> int64 = "unix_unistd_chown_ptr"
+external unix_unistd_chown_ptr : unit -> nativeint = "unix_unistd_chown_ptr"
+
+let to_uid_t = Uid.of_int
+let to_gid_t = Gid.of_int
 
 let chown =
   let c = local ~check_errno:true (unix_unistd_chown_ptr ())
@@ -220,7 +225,7 @@ let chown =
     try ignore (c path (to_uid_t owner) (to_gid_t group))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"chown",path))
 
-external unix_unistd_fchown_ptr : unit -> int64 = "unix_unistd_fchown_ptr"
+external unix_unistd_fchown_ptr : unit -> nativeint = "unix_unistd_fchown_ptr"
 
 let fchown =
   let c = local ~check_errno:true (unix_unistd_fchown_ptr ())
@@ -232,7 +237,7 @@ let fchown =
 
 (* Process functions *)
 
-external unix_unistd_seteuid_ptr : unit -> int64 = "unix_unistd_seteuid_ptr"
+external unix_unistd_seteuid_ptr : unit -> nativeint = "unix_unistd_seteuid_ptr"
 
 let seteuid =
   let c = local ~check_errno:true (unix_unistd_seteuid_ptr ())
@@ -242,7 +247,7 @@ let seteuid =
     try ignore (c (to_uid_t uid))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"seteuid",""))
 
-external unix_unistd_setegid_ptr : unit -> int64 = "unix_unistd_setegid_ptr"
+external unix_unistd_setegid_ptr : unit -> nativeint = "unix_unistd_setegid_ptr"
 
 let setegid =
   let c = local ~check_errno:true (unix_unistd_setegid_ptr ())
