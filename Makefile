@@ -18,9 +18,8 @@ endif
 
 CFLAGS=-fPIC -Wall -Wextra -Werror -std=c99
 
-build:
+build: $(BUILD)/$(MOD_NAME)_stubs.o
 	mkdir -p $(BUILD)
-	cc -c $(CFLAGS) -o $(BUILD)/$(MOD_NAME)_stubs.o lib/$(MOD_NAME)_stubs.c -I$(shell ocamlc -where)
 	ocamlfind ocamlc -o $(BUILD)/$(MOD_NAME)_common.cmi -g \
 		-c lib/$(MOD_NAME)_common.mli
 	ocamlfind ocamlc -o $(BUILD)/$(MOD_NAME).cmi -g -I $(BUILD) -I lib \
@@ -29,6 +28,10 @@ build:
 		-ocamlc "ocamlc -g" -ocamlopt "ocamlopt -g" -I $(BUILD) \
 		$(FLAGS) lib/$(MOD_NAME)_common.ml $(SRC)/$(MOD_NAME).ml \
 		$(BUILD)/$(MOD_NAME)_stubs.o
+
+$(BUILD)/%_stubs.o: lib/%_stubs.c
+	mkdir -p $(BUILD)
+	cc -c $(CFLAGS) -o $@ $< -I$(shell ocamlc -where)
 
 META: META.in
 	cp META.in META
