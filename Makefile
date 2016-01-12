@@ -6,41 +6,45 @@ BUILD=_build/lib
 
 HAS_CTYPES := $(shell ocamlfind query ctypes.foreign fd-send-recv > /dev/null; echo $$?)
 
-LWT_PATH := $(shell ocamlfind query lwt)
+LWT_PATH := $(shell ocamlfind query lwt 2>/dev/null || true)
 
 STUBS = $(BUILD)/$(MOD_NAME)_stubs.o
 
 CFLAGS=-fPIC -Wall -Wextra -Werror
 
 ifneq ($(HAS_CTYPES),0)
-SRC=lib/no_ctypes
-FLAGS=
-EXTRA_META+=requires = \"unix\"
+  SRC=lib/no_ctypes
+  FLAGS=
+  EXTRA_META+=requires = \"unix\"
 else
-SRC=lib/ctypes
-FLAGS=-package ctypes.foreign,fd-send-recv,lwt.unix
-EXTRA_META+=requires = \"unix ctypes.foreign fd-send-recv\"
+  SRC=lib/ctypes
+  FLAGS=-package ctypes.foreign,fd-send-recv
+  EXTRA_META+=requires = \"unix ctypes.foreign fd-send-recv\"
+  ifneq ($(LWT_PATH),)
+    EXTRA_META += requires = \"lwt\"
+    STUBS += $(BUILD)/$(MOD_NAME)_lwt_stubs.o
+    FLAGS += -package lwt.unix
+    CFLAGS += -I $(LWT_PATH)
+  endif
 endif
 
-ifneq ($(LWT_PATH),)
-EXTRA_META+=lwt
-STUBS += $(BUILD)/$(MOD_NAME)_lwt_stubs.o
-CFLAGS += -I $(LWT_PATH)
-endif
-
-build: $(STUBS)
+build: $(STUBS) $(BUILD)/$(MOD_NAME).cmi
 	mkdir -p $(BUILD)
-	ocamlfind ocamlc -o $(BUILD)/$(MOD_NAME)_common.cmi -g \
-		-c lib/$(MOD_NAME)_common.mli
-	ocamlfind ocamlc -o $(BUILD)/$(MOD_NAME).cmi -g -I $(BUILD) -I lib \
-		$(FLAGS) -c $(SRC)/$(MOD_NAME).mli
 	ocamlfind ocamlmklib -o $(BUILD)/$(MOD_NAME) \
 		-ocamlc "ocamlc -g" -ocamlopt "ocamlopt -g" -I $(BUILD) \
 		$(FLAGS) lib/$(MOD_NAME)_common.ml $(SRC)/$(MOD_NAME).ml \
 		$(BUILD)/$(MOD_NAME)_stubs.o
 
+$(BUILD)/$(MOD_NAME).cmi: $(SRC)/$(MOD_NAME).mli $(BUILD)/$(MOD_NAME)_common.cmi
+	@mkdir -p $(BUILD)
+	ocamlfind ocamlc -o $@ -g -I $(BUILD) -I lib $(FLAGS) -c $<
+
+$(BUILD)/$(MOD_NAME)_common.cmi: lib/$(MOD_NAME)_common.mli
+	@mkdir -p $(BUILD)
+	ocamlfind ocamlc -o $@ -g -c $<
+
 $(BUILD)/%_stubs.o: lib/%_stubs.c
-	mkdir -p $(BUILD)
+	@mkdir -p $(BUILD)
 	cc -c $(CFLAGS) -o $@ $< -I$(shell ocamlc -where)
 
 META: META.in
