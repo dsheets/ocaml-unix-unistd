@@ -15,8 +15,20 @@
  *
  *)
 
-(** Can raise Unix.Unix_error *)
-val pread_lwt : Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int Lwt.t
+module type S =
+sig
+  (** Can raise Unix.Unix_error *)
+  val pread_lwt : ?blocking:bool ->
+    Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int Lwt.t
+    
+  (** Can raise Unix.Unix_error *)
+  val pwrite_lwt : ?blocking:bool ->
+    Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int Lwt.t
+end
 
-(** Can raise Unix.Unix_error *)
-val pwrite_lwt : Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int Lwt.t
+module Make
+    (X:
+     sig
+       val pread : Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int
+       val pwrite : Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int
+     end) : S
