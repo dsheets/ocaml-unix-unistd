@@ -6,19 +6,29 @@ BUILD=_build/lib
 
 HAS_CTYPES := $(shell ocamlfind query ctypes.foreign fd-send-recv > /dev/null; echo $$?)
 
+LWT_PATH := $(shell ocamlfind query lwt)
+
+STUBS = $(BUILD)/$(MOD_NAME)_stubs.o
+
+CFLAGS=-fPIC -Wall -Wextra -Werror
+
 ifneq ($(HAS_CTYPES),0)
 SRC=lib/no_ctypes
 FLAGS=
-EXTRA_META=requires = \"unix\"
+EXTRA_META+=requires = \"unix\"
 else
 SRC=lib/ctypes
-FLAGS=-package ctypes.foreign,fd-send-recv
-EXTRA_META=requires = \"unix ctypes.foreign fd-send-recv\"
+FLAGS=-package ctypes.foreign,fd-send-recv,lwt.unix
+EXTRA_META+=requires = \"unix ctypes.foreign fd-send-recv\"
 endif
 
-CFLAGS=-fPIC -Wall -Wextra -Werror -std=c99
+ifneq ($(LWT_PATH),)
+EXTRA_META+=lwt
+STUBS += $(BUILD)/$(MOD_NAME)_lwt_stubs.o
+CFLAGS += -I $(LWT_PATH)
+endif
 
-build: $(BUILD)/$(MOD_NAME)_stubs.o
+build: $(STUBS)
 	mkdir -p $(BUILD)
 	ocamlfind ocamlc -o $(BUILD)/$(MOD_NAME)_common.cmi -g \
 		-c lib/$(MOD_NAME)_common.mli
