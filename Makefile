@@ -7,6 +7,7 @@ BUILD=_build/lib
 HAS_CTYPES := $(shell ocamlfind query ctypes.foreign fd-send-recv > /dev/null; echo $$?)
 
 LWT_PATH := $(shell ocamlfind query lwt 2>/dev/null || true)
+LWT_SRC=lib/no-lwt
 
 STUBS = $(BUILD)/$(MOD_NAME)_stubs.o
 
@@ -28,8 +29,6 @@ else
     STUBS += $(BUILD)/$(MOD_NAME)_lwt_stubs.o
     FLAGS += -package lwt.unix
     CFLAGS += -I $(LWT_PATH)
-  else
-    LWT_SRC=lib/no-lwt
   endif
 endif
 
