@@ -85,7 +85,7 @@ int unix_unistd_lseek(int fd, off_t offset, int whence) {
 
 value unix_unistd_lseek_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_lseek);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_lseek);
 }
 
 int unix_unistd_rmdir(const char *pathname) {
@@ -98,7 +98,7 @@ int unix_unistd_rmdir(const char *pathname) {
 
 value unix_unistd_rmdir_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_rmdir);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_rmdir);
 }
 
 int unix_unistd_unlink(const char *pathname) {
@@ -111,7 +111,7 @@ int unix_unistd_unlink(const char *pathname) {
 
 value unix_unistd_unlink_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_unlink);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_unlink);
 }
 
 ssize_t unix_unistd_write(int fd, void *buf, size_t count) {
@@ -124,7 +124,7 @@ ssize_t unix_unistd_write(int fd, void *buf, size_t count) {
 
 value unix_unistd_write_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_write);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_write);
 }
 
 ssize_t unix_unistd_pwrite(int fd, void *buf, size_t count, off_t offset) {
@@ -137,7 +137,7 @@ ssize_t unix_unistd_pwrite(int fd, void *buf, size_t count, off_t offset) {
 
 value unix_unistd_pwrite_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_pwrite);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_pwrite);
 }
 
 ssize_t unix_unistd_read(int fd, void *buf, size_t count) {
@@ -150,7 +150,7 @@ ssize_t unix_unistd_read(int fd, void *buf, size_t count) {
 
 value unix_unistd_read_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_read);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_read);
 }
 
 ssize_t unix_unistd_pread(int fd, void *buf, size_t count, off_t offset) {
@@ -163,7 +163,7 @@ ssize_t unix_unistd_pread(int fd, void *buf, size_t count, off_t offset) {
 
 value unix_unistd_pread_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_pread);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_pread);
 }
 
 int unix_unistd_close(int fd) {
@@ -176,7 +176,7 @@ int unix_unistd_close(int fd) {
 
 value unix_unistd_close_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_close);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_close);
 }
 
 int unix_unistd_access(const char *pathname, int mode) {
@@ -189,7 +189,7 @@ int unix_unistd_access(const char *pathname, int mode) {
 
 value unix_unistd_access_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_access);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_access);
 }
 
 ssize_t unix_unistd_readlink(const char *path, char *buf, size_t bufsiz) {
@@ -202,7 +202,7 @@ ssize_t unix_unistd_readlink(const char *path, char *buf, size_t bufsiz) {
 
 value unix_unistd_readlink_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_readlink);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_readlink);
 }
 
 int unix_unistd_symlink(const char *target, const char *linkpath) {
@@ -215,7 +215,7 @@ int unix_unistd_symlink(const char *target, const char *linkpath) {
 
 value unix_unistd_symlink_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_symlink);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_symlink);
 }
 
 int unix_unistd_truncate(const char *path, off_t length) {
@@ -228,7 +228,7 @@ int unix_unistd_truncate(const char *path, off_t length) {
 
 value unix_unistd_truncate_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_truncate);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_truncate);
 }
 
 int unix_unistd_ftruncate(int fd, off_t length) {
@@ -241,7 +241,7 @@ int unix_unistd_ftruncate(int fd, off_t length) {
 
 value unix_unistd_ftruncate_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_ftruncate);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_ftruncate);
 }
 
 int unix_unistd_chown(const char *path, uid_t owner, gid_t group) {
@@ -254,7 +254,7 @@ int unix_unistd_chown(const char *path, uid_t owner, gid_t group) {
 
 value unix_unistd_chown_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_chown);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_chown);
 }
 
 int unix_unistd_fchown(int fd, uid_t owner, gid_t group) {
@@ -267,7 +267,7 @@ int unix_unistd_fchown(int fd, uid_t owner, gid_t group) {
 
 value unix_unistd_fchown_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_fchown);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_fchown);
 }
 
 int unix_unistd_seteuid(uid_t uid) {
@@ -280,7 +280,7 @@ int unix_unistd_seteuid(uid_t uid) {
 
 value unix_unistd_seteuid_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_seteuid);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_seteuid);
 }
 
 int unix_unistd_setegid(gid_t gid) {
@@ -293,5 +293,5 @@ int unix_unistd_setegid(gid_t gid) {
 
 value unix_unistd_setegid_ptr(value _) {
   UNUSED(_);
-  return caml_copy_int64((intptr_t)(void *)unix_unistd_setegid);
+  return caml_copy_nativeint((intptr_t)(void *)unix_unistd_setegid);
 }
