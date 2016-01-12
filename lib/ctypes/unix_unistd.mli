@@ -90,3 +90,5 @@ val seteuid : int -> unit
 
 (** Can raise Unix.Unix_error *)
 val setegid : int -> unit
+
+include module type of Unix_unistd_lwt

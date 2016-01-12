@@ -11,6 +11,8 @@
 #include <caml/mlvalues.h>
 #include <caml/bigarray.h>
 
+#include "ctypes_raw_pointer.h"
+
 #include "lwt_unix.h"
 
 struct job_pread_c_memory {
@@ -46,21 +48,20 @@ value result_pread_c_memory(struct job_pread_c_memory *job)
 }
 
 /* lwt_pread_c_memory_job:
- *   file_descr -> bigstring -> src_ofs:int -> file_ofs:int -> len:int ->
+ *   file_descr -> _ Ctypes.ptr -> len:int -> file_ofs:int64 ->
  *   int Lwt_unix.job
  */
 CAMLprim
 value unix_unistd_lwt_pread_c_memory_job(value val_fd,
                                          value val_buf,
-                                         value val_src_ofs,
-                                         value val_file_ofs,
-                                         value val_len)
+                                         value val_len,
+                                         value val_file_ofs)
 {
   LWT_UNIX_INIT_JOB(job, pread_c_memory, 0);
   job->fd = Int_val(val_fd);
-  job->buffer = (char*)Caml_ba_data_val(val_buf) + Long_val(val_src_ofs);
+  job->buffer = CTYPES_ADDR_OF_FATPTR(val_buf);
   job->count = Long_val(val_len);
-  job->offset = Long_val(val_file_ofs);
+  job->offset = Int64_val(val_file_ofs);
   job->result = -1;
   job->error_code = INT_MAX;
   return lwt_unix_alloc_job(&(job->job));
@@ -101,21 +102,20 @@ value result_pwrite_c_memory(struct job_pwrite_c_memory *job)
 }
 
 /* lwt_pwrite_c_memory_job:
- *   file_descr -> bigstring -> src_ofs:int -> file_ofs:int -> len:int ->
+ *   file_descr -> _ Ctypes.ptr -> len:int -> file_ofs:int64 ->
  *   int Lwt_unix.job
  */
 CAMLprim
 value unix_unistd_lwt_pwrite_c_memory_job(value val_fd,
                                           value val_buf,
-                                          value val_src_ofs,
-                                          value val_file_ofs,
-                                          value val_len)
+                                          value val_len,
+                                          value val_file_ofs)
 {
   LWT_UNIX_INIT_JOB(job, pwrite_c_memory, 0);
   job->fd = Int_val(val_fd);
-  job->buffer = (char*)Caml_ba_data_val(val_buf) + Long_val(val_src_ofs);
+  job->buffer = CTYPES_ADDR_OF_FATPTR(val_buf);
   job->count = Long_val(val_len);
-  job->offset = Long_val(val_file_ofs);
+  job->offset = Int64_val(val_file_ofs);
   job->result = -1;
   job->error_code = INT_MAX;
   return lwt_unix_alloc_job(&(job->job));
