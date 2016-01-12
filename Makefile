@@ -6,29 +6,58 @@ BUILD=_build/lib
 
 HAS_CTYPES := $(shell ocamlfind query ctypes.foreign fd-send-recv > /dev/null; echo $$?)
 
-ifneq ($(HAS_CTYPES),0)
-SRC=lib/no_ctypes
+LWT_PATH := $(shell ocamlfind query lwt 2>/dev/null || true)
+LWT_SRC=lib/no-lwt
+
+STUBS = $(BUILD)/$(MOD_NAME)_stubs.o
+
+CFLAGS=-fPIC -Wall -Wextra -Werror -g
+
 FLAGS=
-EXTRA_META=requires = \"unix\"
+
+ifneq ($(HAS_CTYPES),0)
+  SRC=lib/no_ctypes
+  EXTRA_META+=requires = \"unix\"
 else
-SRC=lib/ctypes
-FLAGS=-package ctypes.foreign,fd-send-recv
-EXTRA_META=requires = \"unix ctypes.foreign fd-send-recv\"
+  SRC=lib/ctypes
+  FLAGS += -package ctypes.foreign,fd-send-recv
+  EXTRA_META+=requires = \"unix ctypes.foreign fd-send-recv\"
+  CFLAGS += -I $(shell ocamlfind query ctypes)
+  ifneq ($(LWT_PATH),)
+    LWT_SRC=lib/lwt
+    EXTRA_META += requires += \"lwt.unix\"
+    STUBS += $(BUILD)/$(MOD_NAME)_lwt_stubs.o
+    FLAGS += -package lwt.unix
+    CFLAGS += -I $(LWT_PATH)
+  endif
 endif
 
-CFLAGS=-fPIC -Wall -Wextra -Werror -std=c99
-
-build:
+build: $(STUBS) $(BUILD)/$(MOD_NAME).cmi
 	mkdir -p $(BUILD)
-	cc -c $(CFLAGS) -o $(BUILD)/$(MOD_NAME)_stubs.o lib/$(MOD_NAME)_stubs.c -I$(shell ocamlc -where)
-	ocamlfind ocamlc -o $(BUILD)/$(MOD_NAME)_common.cmi -g \
-		-c lib/$(MOD_NAME)_common.mli
-	ocamlfind ocamlc -o $(BUILD)/$(MOD_NAME).cmi -g -I $(BUILD) -I lib \
-		$(FLAGS) -c $(SRC)/$(MOD_NAME).mli
 	ocamlfind ocamlmklib -o $(BUILD)/$(MOD_NAME) \
 		-ocamlc "ocamlc -g" -ocamlopt "ocamlopt -g" -I $(BUILD) \
-		$(FLAGS) lib/$(MOD_NAME)_common.ml $(SRC)/$(MOD_NAME).ml \
-		$(BUILD)/$(MOD_NAME)_stubs.o
+		$(FLAGS) lib/$(MOD_NAME)_common.ml \
+		$(LWT_SRC)/$(MOD_NAME)_lwt.ml \
+		$(SRC)/$(MOD_NAME).ml \
+	$(STUBS)
+
+$(BUILD)/$(MOD_NAME).cmi: $(SRC)/$(MOD_NAME).mli \
+                          $(BUILD)/$(MOD_NAME)_common.cmi \
+                          $(BUILD)/$(MOD_NAME)_lwt.cmi
+	@mkdir -p $(BUILD)
+	ocamlfind ocamlc -o $@ -g -I $(BUILD) -I lib $(FLAGS) -c $<
+
+$(BUILD)/$(MOD_NAME)_common.cmi: lib/$(MOD_NAME)_common.mli
+	@mkdir -p $(BUILD)
+	ocamlfind ocamlc -o $@ -g -c $<
+
+$(BUILD)/$(MOD_NAME)_lwt.cmi: $(LWT_SRC)/$(MOD_NAME)_lwt.mli
+	@mkdir -p $(BUILD)
+	ocamlfind ocamlc -o $@ -g -c $(FLAGS) $<
+
+$(BUILD)/%_stubs.o: lib/%_stubs.c
+	@mkdir -p $(BUILD)
+	cc -c $(CFLAGS) -o $@ $< -I$(shell ocamlc -where)
 
 META: META.in
 	cp META.in META
@@ -38,6 +67,7 @@ install: META
 	ocamlfind install $(FINDLIB_NAME) META \
 		$(SRC)/$(MOD_NAME).mli \
 		$(BUILD)/$(MOD_NAME).cmi \
+		$(BUILD)/$(MOD_NAME)_lwt.cmi \
 		$(BUILD)/$(MOD_NAME).cma \
 		$(BUILD)/$(MOD_NAME).cmxa \
 		-dll $(BUILD)/dll$(MOD_NAME).so \

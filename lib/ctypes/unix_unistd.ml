@@ -256,3 +256,6 @@ let setegid =
   fun gid ->
     try ignore (c (to_gid_t gid))
     with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"setegid",""))
+
+include Unix_unistd_lwt.Make
+    (struct let pread = pread and pwrite = pwrite end)
