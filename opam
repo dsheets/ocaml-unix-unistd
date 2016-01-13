@@ -18,8 +18,9 @@ depends: [
 depopts: [
   "ctypes"
   "ctypes-foreign"
-  "lwt" {>= "2.5.0"}
+  "lwt"
 ]
 conflicts: [
+  "lwt" {< "2.5.0"}
   "ctypes" {< "0.4.0"}
 ]
