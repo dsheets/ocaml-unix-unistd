@@ -11,8 +11,16 @@ external lwt_pread_c_memory_job :
 module type S =
 sig
   (** Can raise Unix.Unix_error *)
+  val write_lwt : ?blocking:bool ->
+    Unix.file_descr -> unit Ctypes.ptr -> int -> int Lwt.t
+
+  (** Can raise Unix.Unix_error *)
   val pwrite_lwt : ?blocking:bool ->
     Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int Lwt.t
+
+  (** Can raise Unix.Unix_error *)
+  val read_lwt : ?blocking:bool ->
+    Unix.file_descr -> unit Ctypes.ptr -> int -> int Lwt.t
 
   (** Can raise Unix.Unix_error *)
   val pread_lwt : ?blocking:bool ->
@@ -26,6 +34,15 @@ module Make
        val pread : Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int
      end) : S =
 struct
+  let char_bigarray_of_unit_ptr p len =
+    let open Ctypes in
+    bigarray_of_ptr array1 len Bigarray.char
+      (coerce (ptr void) (ptr char) p)
+
+  let write_lwt ?blocking fd ptr len =
+    let lwt_fd = Lwt_unix.of_unix_file_descr ?blocking fd in
+    Lwt_bytes.write lwt_fd (char_bigarray_of_unit_ptr ptr len) 0 len
+
   let pwrite_lwt ?blocking fd (Ctypes_static.CPointer ptr as p) len offset =
     let lwt_fd = Lwt_unix.of_unix_file_descr ?blocking fd in
     Lwt_unix.blocking lwt_fd >>= function
@@ -35,6 +52,10 @@ struct
     | false ->
       Lwt_unix.(wrap_syscall Write) lwt_fd @@ fun () ->
       X.pwrite fd p len offset
+
+  let read_lwt ?blocking fd ptr len =
+    let lwt_fd = Lwt_unix.of_unix_file_descr ?blocking fd in
+    Lwt_bytes.read lwt_fd (char_bigarray_of_unit_ptr ptr len) 0 len
 
   let pread_lwt ?blocking fd (Ctypes_static.CPointer ptr as p) len offset =
     let lwt_fd = Lwt_unix.of_unix_file_descr ?blocking fd in
