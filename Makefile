@@ -4,7 +4,7 @@ FINDLIB_NAME=unix-unistd
 MOD_NAME=unix_unistd
 BUILD=_build/lib
 
-HAS_CTYPES := $(shell ocamlfind query ctypes.foreign fd-send-recv > /dev/null 2>&1; echo $$?)
+HAS_CTYPES := $(shell ocamlfind query ctypes.foreign unix-type-representations > /dev/null 2>&1; echo $$?)
 
 LWT_PATH := $(shell ocamlfind query lwt 2>/dev/null || true)
 LWT_SRC=lib/no-lwt
@@ -20,8 +20,8 @@ ifneq ($(HAS_CTYPES),0)
   EXTRA_META+=requires = \"unix\"
 else
   SRC=lib/ctypes
-  FLAGS += -package ctypes.foreign,fd-send-recv
-  EXTRA_META+=requires = \"unix ctypes.foreign fd-send-recv
+  FLAGS += -package ctypes.foreign,unix-type-representations
+  EXTRA_META+=requires = \"unix ctypes.foreign unix-type-representations
   CFLAGS += -I $(shell ocamlfind query ctypes)
   ifneq ($(LWT_PATH),)
     LWT_SRC=lib/lwt

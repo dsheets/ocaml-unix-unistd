@@ -54,7 +54,7 @@ let uid_t = uint
 module Gid = UInt
 let gid_t = uint
 
-let fd = Fd_send_recv.(view ~read:fd_of_int ~write:int_of_fd int)
+let fd = Unix_representations.(view int ~read:file_descr_of_int ~write:int_of_file_descr)
 
 (* Filesystem functions *)
 
