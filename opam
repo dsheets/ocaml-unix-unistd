@@ -19,6 +19,7 @@ depopts: [
   "ctypes"
   "ctypes-foreign"
   "lwt"
+  "unix-type-representations"
 ]
 conflicts: [
   "lwt" {< "2.5.0"}
