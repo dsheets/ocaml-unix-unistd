@@ -32,11 +32,11 @@ let char_bigarray_of_unit_ptr p len =
   bigarray_of_ptr array1 len Bigarray.char
     (coerce (ptr void) (ptr char) p)
 
-let write_lwt ?blocking fd ptr len =
+let write ?blocking fd ptr len =
   let lwt_fd = Lwt_unix.of_unix_file_descr ?blocking fd in
   Lwt_bytes.write lwt_fd (char_bigarray_of_unit_ptr ptr len) 0 len
 
-let pwrite_lwt ?blocking fd (Ctypes_static.CPointer ptr as p) len offset =
+let pwrite ?blocking fd (Ctypes_static.CPointer ptr as p) len offset =
   let lwt_fd = Lwt_unix.of_unix_file_descr ?blocking fd in
   Lwt_unix.blocking lwt_fd >>= function
   | true ->
@@ -46,11 +46,11 @@ let pwrite_lwt ?blocking fd (Ctypes_static.CPointer ptr as p) len offset =
     Lwt_unix.(wrap_syscall Write) lwt_fd @@ fun () ->
     Unistd_unix.pwrite fd p len offset
 
-let read_lwt ?blocking fd ptr len =
+let read ?blocking fd ptr len =
   let lwt_fd = Lwt_unix.of_unix_file_descr ?blocking fd in
   Lwt_bytes.read lwt_fd (char_bigarray_of_unit_ptr ptr len) 0 len
 
-let pread_lwt ?blocking fd (Ctypes_static.CPointer ptr as p) len offset =
+let pread ?blocking fd (Ctypes_static.CPointer ptr as p) len offset =
   let lwt_fd = Lwt_unix.of_unix_file_descr ?blocking fd in
   Lwt_unix.blocking lwt_fd >>= function
   | true ->
