@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2014 David Sheets <sheets@alum.mit.edu>
+ * Copyright (c) 2016 Jeremy Yallop <jeremy.yallop@unikernel.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,4 +15,18 @@
  *
  *)
 
-include module type of Unix_unistd_common
+(** Can raise Unix.Unix_error *)
+val write_lwt : ?blocking:bool ->
+  Unix.file_descr -> unit Ctypes.ptr -> int -> int Lwt.t
+
+(** Can raise Unix.Unix_error *)
+val pwrite_lwt : ?blocking:bool ->
+  Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int Lwt.t
+
+(** Can raise Unix.Unix_error *)
+val read_lwt : ?blocking:bool ->
+  Unix.file_descr -> unit Ctypes.ptr -> int -> int Lwt.t
+
+(** Can raise Unix.Unix_error *)
+val pread_lwt : ?blocking:bool ->
+  Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int Lwt.t

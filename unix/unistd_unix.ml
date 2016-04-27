@@ -16,17 +16,17 @@
  *)
 
 module Access = struct
-  include Unix_unistd_common.Access
+  include Unistd.Access
 
   let view ~host = Ctypes.(view ~read:(of_code ~host) ~write:(to_code ~host) int)
 end
 
 module Seek = struct
-  include Unix_unistd_common.Seek
+  include Unistd.Seek
 end
 
 module Sysconf = struct
-  include Unix_unistd_common.Sysconf
+  include Unistd.Sysconf
 end
 
 type host = {
@@ -273,6 +273,3 @@ let setegid =
     Errno_unix.raise_on_errno ~call:"setegid" begin fun () ->
       ignore (c (to_gid_t gid))
     end
-
-include Unix_unistd_lwt.Make
-    (struct let pread = pread and pwrite = pwrite end)

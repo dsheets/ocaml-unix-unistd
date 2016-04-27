@@ -1,0 +1,26 @@
+version = "0.3.0"
+description = "Unix unistd types, maps, and support"
+requires = "bytes"
+archive(byte) = "unistd.cma"
+archive(bytes, plugin) = "unistd.cma"
+archive(native) = "unistd.cmxa"
+archive(native, plugin) = "unistd.cmxs"
+exists_if = "unistd.cma"
+
+package "unix" (
+  requires = "unix-unistd ctypes ctypes.foreign unix unix-type-representations unix-errno.unix"
+  archive(byte) = "unix_unistd.cma"
+  archive(bytes, plugin) = "unix_unistd.cma"
+  archive(native) = "unix_unistd.cmxa"
+  archive(native, plugin) = "unix_unistd.cmxs"
+  exists_if = "unix_unistd.cma"
+)
+
+package "lwt" (
+  requires = "unix-unistd unix-unistd.unix threads lwt.unix"
+  archive(byte) = "unix_unistd_lwt.cma"
+  archive(byte, plugin) = "unix_unistd_lwt.cma"
+  archive(native) = "unix_unistd_lwt.cmxa"
+  archive(native, plugin) = "unix_unistd_lwt.cmxs"
+  exists_if = "unix_unistd_lwt.cma"
+)

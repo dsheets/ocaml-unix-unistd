@@ -1,5 +1,0 @@
-version = "0.1"
-description = "Host-dependent UNIX unistd.h access"
-archive(byte) = "unix_unistd.cma"
-archive(native) = "unix_unistd.cmxa"
-exists_if = "unix_unistd.cma"
