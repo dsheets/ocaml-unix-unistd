@@ -22,6 +22,7 @@ depopts: [
   "lwt"
   "unix-type-representations"
   "unix-errno"
+  "base-unix"
 ]
 conflicts: [
   "lwt" {< "2.5.0"}
