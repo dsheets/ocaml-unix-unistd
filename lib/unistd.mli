@@ -18,36 +18,66 @@
 module Access : sig
   type t = Unix.access_permission
 
-  type host
-  val to_code : host:host -> t list -> int
-  val host : host
-  val of_code : host:host -> int -> t list
+  type defns = {
+    r_ok : int;
+    w_ok : int;
+    x_ok : int;
+    f_ok : int;
+  }
 
-  val is_set : host:host -> t -> int -> bool
-  val set : host:host -> t -> int -> int
+  module Host : sig
+    type t
+    val of_defns : defns -> t
+    val to_defns : t -> defns
+  end
+
+  val to_code : host:Host.t -> t list -> int
+  val of_code : host:Host.t -> int -> t list
+
+  val is_set : host:Host.t -> t -> int -> bool
+  val set : host:Host.t -> t -> int -> int
 end
 
 module Seek : sig
   type t = SEEK_SET | SEEK_CUR | SEEK_END | SEEK_DATA | SEEK_HOLE
 
-  type host
-  val to_code : host:host -> t -> int option
-  val host : host
-  val of_code_exn : host:host -> int -> t
-  val of_code : host:host -> int -> t option
+  type defns = {
+    seek_set  : int;
+    seek_cur  : int;
+    seek_end  : int;
+    seek_data : int option;
+    seek_hole : int option;
+  }
+
+  module Host : sig
+    type t
+    val of_defns : defns -> t
+    val to_defns : t -> defns
+  end
+
+  val to_code : host:Host.t -> t -> int option
+  val of_code_exn : host:Host.t -> int -> t
+  val of_code : host:Host.t -> int -> t option
 end
 
 module Sysconf : sig
-  type host
 
-  val host : host
+  type defns = {
+    pagesize : int;
+  }
 
-  val pagesize : host:host -> int
+  module Host : sig
+    type t
+    val of_defns : defns -> t
+    val to_defns : t -> defns
+  end
+
+  val pagesize : host:Host.t -> int
 end
 
 type host = {
-  access  : Access.host;
-  seek    : Seek.host;
-  sysconf : Sysconf.host;
+  access  : Access.Host.t;
+  seek    : Seek.Host.t;
+  sysconf : Sysconf.Host.t;
 }
-val host : host
+

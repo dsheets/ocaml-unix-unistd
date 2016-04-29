@@ -25,10 +25,6 @@ TARGETS=.cma .cmxa
 
 PRODUCTS:=$(addprefix unistd,$(TARGETS))
 
-PRODUCTS+=$(addprefix unistd,$(TARGETS)) \
-          libunistd_stubs.a dllunistd_stubs.so
-
-
 ifeq ($(WITH_UNIX), 0)
 PRODUCTS+=$(addprefix $(MOD_NAME),$(TARGETS)) \
           lib$(MOD_NAME)_stubs.a dll$(MOD_NAME)_stubs.so
@@ -44,10 +40,7 @@ TYPES=.mli .cmi .cmti
 INSTALL:=$(addprefix unistd,$(TYPES)) \
          $(addprefix unistd,$(TARGETS))
 
-INSTALL:=$(addprefix _build/lib/,$(INSTALL)) \
-         -dll _build/lib/dllunistd_stubs.so \
-         -nodll _build/lib/libunistd_stubs.a
-
+INSTALL:=$(addprefix _build/lib/,$(INSTALL))
 
 ifeq ($(WITH_UNIX), 0)
 INSTALL_UNIX:=$(addprefix unistd_unix,$(TYPES)) \

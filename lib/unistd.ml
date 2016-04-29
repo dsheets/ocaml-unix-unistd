@@ -18,11 +18,6 @@
 module Access = struct
   type t = Unix.access_permission
 
-  external r_ok : unit -> int = "unix_unistd_r_ok" "noalloc"
-  external w_ok : unit -> int = "unix_unistd_w_ok" "noalloc"
-  external x_ok : unit -> int = "unix_unistd_x_ok" "noalloc"
-  external f_ok : unit -> int = "unix_unistd_f_ok" "noalloc"
-
   type defns = {
     r_ok : int;
     w_ok : int;
@@ -30,7 +25,11 @@ module Access = struct
     f_ok : int;
   }
 
-  type host = defns
+  module Host = struct
+    type t = defns
+    let of_defns d = d
+    and to_defns d = d
+  end
 
   let _to_code ~host = let defns = host in Unix.(function
     | R_OK -> defns.r_ok
@@ -48,15 +47,6 @@ module Access = struct
 
   let to_code ~host = List.fold_left (fun code t -> set ~host t code) 0
 
-  let host =
-    let defns = {
-      r_ok = r_ok ();
-      w_ok = w_ok ();
-      x_ok = x_ok ();
-      f_ok = f_ok ();
-    } in
-    defns
-
   let of_code ~host code = List.filter
     (fun t -> is_set ~host t code)
     Unix.([R_OK ; W_OK ; X_OK ; F_OK])
@@ -65,12 +55,6 @@ end
 
 module Seek = struct
   type t = SEEK_SET | SEEK_CUR | SEEK_END | SEEK_DATA | SEEK_HOLE
-
-  external seek_set  : unit -> int = "unix_unistd_seek_set"  "noalloc"
-  external seek_cur  : unit -> int = "unix_unistd_seek_cur"  "noalloc"
-  external seek_end  : unit -> int = "unix_unistd_seek_end"  "noalloc"
-  external seek_data : unit -> int = "unix_unistd_seek_data" "noalloc"
-  external seek_hole : unit -> int = "unix_unistd_seek_hole" "noalloc"
 
   type defns = {
     seek_set  : int;
@@ -81,7 +65,23 @@ module Seek = struct
   }
 
   type index = (int, t) Hashtbl.t
-  type host = defns * index
+
+  module Host = struct
+    type t = defns * index
+
+    let index_of_defns defns =
+      let open Hashtbl in
+      let h = create 10 in
+      replace h defns.seek_set  SEEK_SET;
+      replace h defns.seek_cur  SEEK_CUR;
+      replace h defns.seek_end  SEEK_END;
+      (match defns.seek_data with Some i -> replace h i SEEK_DATA | None -> ());
+      (match defns.seek_hole with Some i -> replace h i SEEK_HOLE | None -> ());
+      h
+
+    let of_defns d = (d, index_of_defns d)
+    and to_defns (d, _) = d
+  end
 
   let to_code ~host = let (defns,_) = host in function
     | SEEK_SET  -> Some defns.seek_set
@@ -89,31 +89,6 @@ module Seek = struct
     | SEEK_END  -> Some defns.seek_end
     | SEEK_DATA -> defns.seek_data
     | SEEK_HOLE -> defns.seek_hole
-
-  let index_of_defns defns =
-    let open Hashtbl in
-    let h = create 10 in
-    replace h defns.seek_set  SEEK_SET;
-    replace h defns.seek_cur  SEEK_CUR;
-    replace h defns.seek_end  SEEK_END;
-    (match defns.seek_data with Some i -> replace h i SEEK_DATA | None -> ());
-    (match defns.seek_hole with Some i -> replace h i SEEK_HOLE | None -> ());
-    h
-
-  let host =
-    let check f name = match f () with
-      | -1 -> raise (Failure ("<unistd.h> macro "^name^" missing"))
-      | x -> x
-    in
-    let optional f = match f () with -1 -> None | x -> Some x in
-    let defns = {
-      seek_set  = check seek_set  "SEEK_SET";
-      seek_cur  = check seek_cur  "SEEK_CUR";
-      seek_end  = check seek_end  "SEEK_END";
-      seek_data = optional seek_data;
-      seek_hole = optional seek_hole;
-    } in
-    (defns,index_of_defns defns)
 
   let of_code_exn ~host code =
     let (_,index) = host in
@@ -124,26 +99,21 @@ module Seek = struct
 end
 
 module Sysconf = struct
-  external pagesize : unit -> int = "unix_unistd_pagesize" "noalloc"
-
-  type host = {
+  type defns = {
     pagesize : int;
   }
 
-  let host = {
-    pagesize = pagesize ();
-  }
+  module Host = struct
+    type t = defns
+    let of_defns d = d
+    and to_defns d = d
+  end
 
   let pagesize ~host = host.pagesize
 end
 
 type host = {
-  access  : Access.host;
-  seek    : Seek.host;
-  sysconf : Sysconf.host;
-}
-let host = {
-  access  = Access.host;
-  seek    = Seek.host;
-  sysconf = Sysconf.host;
+  access  : Access.Host.t;
+  seek    : Seek.Host.t;
+  sysconf : Sysconf.Host.t;
 }

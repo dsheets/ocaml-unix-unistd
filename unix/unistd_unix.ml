@@ -15,24 +15,39 @@
  *
  *)
 
+module Type = Unix_unistd_types.C(Unix_unistd_types_detected)
+
+
 module Access = struct
   include Unistd.Access
 
+  let host = Host.of_defns Type.Access.({ r_ok; w_ok; x_ok; f_ok })
   let view ~host = Ctypes.(view ~read:(of_code ~host) ~write:(to_code ~host) int)
 end
 
 module Seek = struct
   include Unistd.Seek
+
+  let host =
+    Host.of_defns Type.Seek.({
+        seek_set;
+        seek_cur;
+        seek_end;
+        seek_data = if seek_data = -1 then None else Some seek_data;
+        seek_hole = if seek_hole = -1 then None else Some seek_hole;
+      })
 end
 
 module Sysconf = struct
   include Unistd.Sysconf
+
+  let host = Host.of_defns Type.Sysconf.({ pagesize = _sc_pagesize })
 end
 
 type host = {
-  access  : Access.host;
-  seek    : Seek.host;
-  sysconf : Sysconf.host;
+  access  : Access.Host.t;
+  seek    : Seek.Host.t;
+  sysconf : Sysconf.Host.t;
 }
 let host = {
   access  = Access.host;
