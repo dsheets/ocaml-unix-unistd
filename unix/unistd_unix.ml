@@ -89,7 +89,9 @@ let lseek =
   fun fd offset whence ->
     let offset = to_off_t offset in
     Errno_unix.raise_on_errno ~call:"lseek" begin fun () ->
-      coerce PosixTypes.off_t int64_t (c fd offset whence)
+        (match coerce PosixTypes.off_t int64_t (c fd offset whence) with
+          | -1L -> None
+          | off -> Some off)
     end
 
 external unix_unistd_unlink_ptr : unit -> nativeint = "unix_unistd_unlink_ptr"
@@ -100,7 +102,9 @@ let unlink =
   in
   fun pathname ->
     Errno_unix.raise_on_errno ~call:"unlink" ~label:pathname begin fun () ->
-      ignore (c pathname)
+      match c pathname with
+      | -1 -> None
+      | 0 | _ -> Some ()
     end
 
 external unix_unistd_rmdir_ptr : unit -> nativeint = "unix_unistd_rmdir_ptr"
@@ -111,7 +115,9 @@ let rmdir =
   in
   fun pathname ->
     Errno_unix.raise_on_errno ~call:"rmdir" ~label:pathname begin fun () ->
-      ignore (c pathname)
+      match c pathname with
+      | -1 -> None
+      | 0 | _ -> Some ()
     end
 
 external unix_unistd_write_ptr : unit -> nativeint = "unix_unistd_write_ptr"
@@ -122,7 +128,9 @@ let write =
   in
   fun fd buf count ->
     Errno_unix.raise_on_errno ~call:"write" begin fun () ->
-      Size_t.to_int (c fd buf (Size_t.of_int count))
+      match Size_t.to_int (c fd buf (Size_t.of_int count)) with
+      | -1 -> None
+      | sz -> Some sz
     end
 
 external unix_unistd_pwrite_ptr : unit -> nativeint = "unix_unistd_pwrite_ptr"
@@ -134,7 +142,9 @@ let pwrite =
   fun fd buf count offset ->
     let offset = to_off_t offset in
     Errno_unix.raise_on_errno ~call:"pwrite" begin fun () ->
-      Size_t.to_int (c fd buf (Size_t.of_int count) offset)
+      match Size_t.to_int (c fd buf (Size_t.of_int count) offset) with
+      | -1 -> None
+      | sz -> Some sz
     end
 
 external unix_unistd_read_ptr : unit -> nativeint = "unix_unistd_read_ptr"
@@ -145,7 +155,9 @@ let read =
   in
   fun fd buf count ->
     Errno_unix.raise_on_errno ~call:"read" begin fun () ->
-      Size_t.to_int (c fd buf (Size_t.of_int count))
+      match Size_t.to_int (c fd buf (Size_t.of_int count)) with
+      | -1 -> None
+      | sz -> Some sz
     end
 
 external unix_unistd_pread_ptr : unit -> nativeint = "unix_unistd_pread_ptr"
@@ -157,7 +169,9 @@ let pread =
   fun fd buf count offset ->
     let offset = to_off_t offset in
     Errno_unix.raise_on_errno ~call:"pread" begin fun () ->
-      Size_t.to_int (c fd buf (Size_t.of_int count) offset)
+      match Size_t.to_int (c fd buf (Size_t.of_int count) offset) with
+      | -1 -> None
+      | sz -> Some sz
     end
 
 external unix_unistd_close_ptr : unit -> nativeint = "unix_unistd_close_ptr"
@@ -168,7 +182,9 @@ let close =
   in
   fun fd ->
     Errno_unix.raise_on_errno ~call:"close" begin fun () ->
-      ignore (c fd)
+      match c fd with
+      | -1 -> None
+      | 0 | _ -> Some ()
     end
 
 external unix_unistd_access_ptr : unit -> nativeint = "unix_unistd_access_ptr"
@@ -179,7 +195,9 @@ let access =
   in
   fun pathname mode ->
     Errno_unix.raise_on_errno ~call:"access" ~label:pathname begin fun () ->
-      ignore (c pathname mode)
+      match c pathname mode with
+      | -1 -> None
+      | 0 | _ -> Some ()
     end
 
 external unix_unistd_readlink_ptr : unit -> nativeint = "unix_unistd_readlink_ptr"
@@ -190,18 +208,20 @@ let readlink =
   in
   let c' path buf sz =
     Errno_unix.raise_on_errno ~call:"readlink" ~label:path begin fun () ->
-      c path buf sz
+      match Size_t.to_int (c path buf sz) with
+      | -1 -> None
+      | sz -> Some sz
     end
   in
   fun path ->
     try
       let sz = ref (Sysconf.(pagesize ~host)) in
       let buf = ref (allocate_n uint8_t ~count:!sz) in
-      let len = ref Size_t.(to_int (c' path (to_voidp !buf) (of_int !sz))) in
+      let len = ref (c' path (to_voidp !buf) (Size_t.of_int !sz)) in
       while !len = !sz do
         sz  := !sz * 2;
         buf := allocate_n uint8_t ~count:!sz;
-        len := Size_t.(to_int (c' path (to_voidp !buf) (of_int !sz)))
+        len := c' path (to_voidp !buf) (Size_t.of_int !sz)
       done;
       CArray.(set (from_ptr !buf (!len+1)) !len (UInt8.of_int 0));
       coerce (ptr uint8_t) string !buf
@@ -215,7 +235,9 @@ let symlink =
   in
   fun source dest ->
     Errno_unix.raise_on_errno ~call:"symlink" ~label:dest begin fun () ->
-      ignore (c source dest)
+      match c source dest with
+      | -1 -> None
+      | 0 | _ -> Some ()
     end
 
 external unix_unistd_truncate_ptr : unit -> nativeint = "unix_unistd_truncate_ptr"
@@ -226,7 +248,9 @@ let truncate =
   in
   fun path length ->
     Errno_unix.raise_on_errno ~call:"truncate" ~label:path begin fun () ->
-      ignore (c path (to_off_t length))
+      match c path (to_off_t length) with
+      | -1 -> None
+      | 0 | _ -> Some ()
     end
 
 external unix_unistd_ftruncate_ptr : unit -> nativeint = "unix_unistd_ftruncate_ptr"
@@ -237,7 +261,9 @@ let ftruncate =
   in
   fun fd length ->
     Errno_unix.raise_on_errno ~call:"ftruncate" begin fun () ->
-      ignore (c fd (to_off_t length))
+      match c fd (to_off_t length) with
+      | -1 -> None
+      | 0 | _ -> Some ()
     end
 
 external unix_unistd_chown_ptr : unit -> nativeint = "unix_unistd_chown_ptr"
@@ -251,7 +277,9 @@ let chown =
   in
   fun path owner group ->
     Errno_unix.raise_on_errno ~call:"chown" ~label:path begin fun () ->
-      ignore (c path (to_uid_t owner) (to_gid_t group))
+      match c path (to_uid_t owner) (to_gid_t group) with
+      | -1 -> None
+      | 0 | _ -> Some ()
     end
 
 external unix_unistd_fchown_ptr : unit -> nativeint = "unix_unistd_fchown_ptr"
@@ -262,7 +290,9 @@ let fchown =
   in
   fun fd owner group ->
     Errno_unix.raise_on_errno ~call:"fchown" begin fun () ->
-      ignore (c fd (to_uid_t owner) (to_gid_t group))
+      match c fd (to_uid_t owner) (to_gid_t group) with
+      | -1 -> None
+      | 0 | _ -> Some ()
     end
 
 (* Process functions *)
@@ -275,7 +305,9 @@ let seteuid =
   in
   fun uid ->
     Errno_unix.raise_on_errno ~call:"seteuid" begin fun () ->
-      ignore (c (to_uid_t uid))
+      match c (to_uid_t uid) with
+      | -1 -> None
+      | 0 | _ -> Some ()
     end
 
 external unix_unistd_setegid_ptr : unit -> nativeint = "unix_unistd_setegid_ptr"
@@ -286,5 +318,7 @@ let setegid =
   in
   fun gid ->
     Errno_unix.raise_on_errno ~call:"setegid" begin fun () ->
-      ignore (c (to_gid_t gid))
+      match c (to_gid_t gid) with
+      | -1 -> None
+      | 0 | _ -> Some ()
     end
