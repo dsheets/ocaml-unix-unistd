@@ -16,33 +16,24 @@
  *)
 
 module Access : sig
-  include module type of Unistd.Access
-
-  val host : Host.t
-  val view : host:Host.t -> t list Ctypes.typ
+  val host : Unistd.Access.Host.t
+  val view : host:Unistd.Access.Host.t -> Unistd.Access.t list Ctypes.typ
 end
 
 module Seek : sig
-  include module type of Unistd.Seek
-  val host : Host.t
+  val host : Unistd.Seek.Host.t
 end
 
 module Sysconf : sig
-  include module type of Unistd.Sysconf
-  val host : Host.t
+  val host : Unistd.Sysconf.Host.t
 end
 
-type host = {
-  access  : Access.Host.t;
-  seek    : Seek.Host.t;
-  sysconf : Sysconf.Host.t;
-}
-val host : host
+val host : Unistd.host
 
 (** Filesystem functions *)
 
 (** Can raise Unix.Unix_error *)
-val lseek : Unix.file_descr -> int64 -> Seek.t -> int64
+val lseek : Unix.file_descr -> int64 -> Unistd.Seek.t -> int64
 
 (** Can raise Unix.Unix_error *)
 val unlink : string -> unit
@@ -66,7 +57,7 @@ val pread : Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int
 val close : Unix.file_descr -> unit
 
 (** Can raise Unix.Unix_error *)
-val access : string -> Access.t list -> unit
+val access : string -> Unistd.Access.t list -> unit
 
 (** Can raise Unix.Unix_error *)
 val readlink : string -> string
