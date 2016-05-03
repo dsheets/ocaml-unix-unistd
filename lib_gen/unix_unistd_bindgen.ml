@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2014 David Sheets <sheets@alum.mit.edu>
+ * Copyright (c) 2015 David Sheets <sheets@alum.mit.edu>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,4 +15,18 @@
  *
  *)
 
-include Unix_unistd_common
+open Ctypes
+
+let () =
+  let prefix = "caml_" in
+  let stubs_oc = open_out "unix/unix_dirent_stubs.c" in
+  let fmt = Format.formatter_of_out_channel stubs_oc in
+  Format.fprintf fmt "#include <dirent.h>@.";
+  Format.fprintf fmt "#include \"unix_dirent_util.h\"@.";
+  Cstubs.write_c fmt ~prefix (module Unix_dirent_bindings.C);
+  close_out stubs_oc;
+
+  let generated_oc = open_out "unix/unix_dirent_generated.ml" in
+  let fmt = Format.formatter_of_out_channel generated_oc in
+  Cstubs.write_ml fmt ~prefix (module Unix_dirent_bindings.C);
+  close_out generated_oc

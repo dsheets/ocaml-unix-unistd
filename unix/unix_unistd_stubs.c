@@ -29,52 +29,6 @@
 
 #define UNUSED(x) (void)(x)
 
-#ifndef R_OK
-#error "unix_unistd_stubs.c: R_OK macro not found"
-#endif
-#ifndef W_OK
-#error "unix_unistd_stubs.c: W_OK macro not found"
-#endif
-#ifndef X_OK
-#error "unix_unistd_stubs.c: X_OK macro not found"
-#endif
-#ifndef F_OK
-#error "unix_unistd_stubs.c: F_OK macro not found"
-#endif
-
-#ifndef SEEK_SET
-#error "unix_unistd_stubs.c: SEEK_SET macro not found"
-#endif
-#ifndef SEEK_CUR
-#error "unix_unistd_stubs.c: SEEK_CUR macro not found"
-#endif
-#ifndef SEEK_END
-#error "unix_unistd_stubs.c: SEEK_END macro not found"
-#endif
-#ifndef SEEK_DATA
-#define SEEK_DATA (-1)
-#endif
-#ifndef SEEK_HOLE
-#define SEEK_HOLE (-1)
-#endif
-
-#ifndef _SC_PAGESIZE
-#error "unix_unistd_stubs.c: _SC_PAGESIZE macro not found"
-#endif
-
-CAMLprim value unix_unistd_r_ok() { return Val_int(R_OK); }
-CAMLprim value unix_unistd_w_ok() { return Val_int(W_OK); }
-CAMLprim value unix_unistd_x_ok() { return Val_int(X_OK); }
-CAMLprim value unix_unistd_f_ok() { return Val_int(F_OK); }
-
-CAMLprim value unix_unistd_seek_set()  { return Val_int(SEEK_SET); }
-CAMLprim value unix_unistd_seek_cur()  { return Val_int(SEEK_CUR); }
-CAMLprim value unix_unistd_seek_end()  { return Val_int(SEEK_END); }
-CAMLprim value unix_unistd_seek_data() { return Val_int(SEEK_DATA); }
-CAMLprim value unix_unistd_seek_hole() { return Val_int(SEEK_HOLE); }
-
-CAMLprim value unix_unistd_pagesize() { return sysconf(_SC_PAGESIZE); }
-
 int unix_unistd_lseek(int fd, off_t offset, int whence) {
   int retval;
   caml_release_runtime_system();

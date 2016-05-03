@@ -1,78 +1,95 @@
-.PHONY: build install uninstall reinstall clean
+.PHONY: build test install uninstall reinstall clean
 
 FINDLIB_NAME=unix-unistd
 MOD_NAME=unix_unistd
-BUILD=_build/lib
 
-HAS_CTYPES := $(shell ocamlfind query ctypes.foreign unix-type-representations unix-errno.unix > /dev/null 2>&1; echo $$?)
+OCAML_LIB_DIR=$(shell ocamlc -where)
 
-LWT_PATH := $(shell ocamlfind query lwt 2>/dev/null || true)
-LWT_SRC=lib/no-lwt
+CTYPES_LIB_DIR=$(shell ocamlfind query ctypes)
 
-STUBS = $(BUILD)/$(MOD_NAME)_stubs.o
+LWT_LIB_DIR=$(shell ocamlfind query lwt)
 
-CFLAGS=-fPIC -Wall -Wextra -Werror -g
+OCAMLBUILD=CTYPES_LIB_DIR=$(CTYPES_LIB_DIR) \
+           LWT_LIB_DIR=$(LWT_LIB_DIR)       \
+           OCAML_LIB_DIR=$(OCAML_LIB_DIR)   \
+             ocamlbuild -use-ocamlfind -classic-display
 
-FLAGS=
+WITH_UNIX=$(shell ocamlfind query \
+            ctypes unix unix-type-representations unix-errno.unix \
+            > /dev/null 2>&1 ; echo $$?)
+WITH_LWT=$(shell ocamlfind query \
+            lwt ctypes unix unix-type-representations unix-errno.unix \
+            > /dev/null 2>&1 ; echo $$?)
 
-ifneq ($(HAS_CTYPES),0)
-  SRC=lib/no_ctypes
-  EXTRA_META+=requires = \"unix\"
-else
-  SRC=lib/ctypes
-  FLAGS += -package ctypes.foreign,unix-type-representations,unix-errno.unix
-  EXTRA_META+=requires = \"unix ctypes.foreign unix-type-representations unix-errno.unix
-  CFLAGS += -I $(shell ocamlfind query ctypes)
-  ifneq ($(LWT_PATH),)
-    LWT_SRC=lib/lwt
-    EXTRA_META += lwt.unix
-    STUBS += $(BUILD)/$(MOD_NAME)_lwt_stubs.o
-    FLAGS += -package lwt.unix
-    CFLAGS += -I $(LWT_PATH)
-  endif
-  EXTRA_META +=\"
+TARGETS=.cma .cmxa
+
+PRODUCTS:=$(addprefix unistd,$(TARGETS))
+
+ifeq ($(WITH_UNIX), 0)
+PRODUCTS+=$(addprefix $(MOD_NAME),$(TARGETS)) \
+          lib$(MOD_NAME)_stubs.a dll$(MOD_NAME)_stubs.so
 endif
 
-build: $(STUBS) $(BUILD)/$(MOD_NAME).cmi
-	mkdir -p $(BUILD)
-	ocamlfind ocamlmklib -o $(BUILD)/$(MOD_NAME) \
-		-ocamlc "ocamlc -g" -ocamlopt "ocamlopt -g" -I $(BUILD) \
-		$(FLAGS) lib/$(MOD_NAME)_common.ml \
-		$(LWT_SRC)/$(MOD_NAME)_lwt.ml \
-		$(SRC)/$(MOD_NAME).ml \
-	$(STUBS)
+ifeq ($(WITH_LWT), 0)
+PRODUCTS+=$(addprefix $(MOD_NAME)_lwt,$(TARGETS)) \
+          lib$(MOD_NAME)_lwt_stubs.a dll$(MOD_NAME)_lwt_stubs.so
+endif
 
-$(BUILD)/$(MOD_NAME).cmi: $(SRC)/$(MOD_NAME).mli \
-                          $(BUILD)/$(MOD_NAME)_common.cmi \
-                          $(BUILD)/$(MOD_NAME)_lwt.cmi
-	@mkdir -p $(BUILD)
-	ocamlfind ocamlc -o $@ -g -I $(BUILD) -I lib $(FLAGS) -c $<
+TYPES=.mli .cmi .cmti
 
-$(BUILD)/$(MOD_NAME)_common.cmi: lib/$(MOD_NAME)_common.mli
-	@mkdir -p $(BUILD)
-	ocamlfind ocamlc -o $@ -g -c $<
+INSTALL:=$(addprefix unistd,$(TYPES)) \
+         $(addprefix unistd,$(TARGETS))
 
-$(BUILD)/$(MOD_NAME)_lwt.cmi: $(LWT_SRC)/$(MOD_NAME)_lwt.mli
-	@mkdir -p $(BUILD)
-	ocamlfind ocamlc -o $@ -g -c $(FLAGS) $<
+INSTALL:=$(addprefix _build/lib/,$(INSTALL))
 
-$(BUILD)/%_stubs.o: lib/%_stubs.c
-	@mkdir -p $(BUILD)
-	cc -c $(CFLAGS) -o $@ $< -I$(shell ocamlc -where)
+ifeq ($(WITH_UNIX), 0)
+INSTALL_UNIX:=$(addprefix unistd_unix,$(TYPES)) \
+              $(addprefix $(MOD_NAME),$(TARGETS))
 
-META: META.in
-	cp META.in META
-	echo $(EXTRA_META) >> META
+INSTALL_UNIX:=$(addprefix _build/unix/,$(INSTALL_UNIX))
+INSTALL_UNIX:=$(INSTALL_UNIX) \
+	      -dll _build/unix/dll$(MOD_NAME)_stubs.so \
+	      -nodll _build/unix/lib$(MOD_NAME)_stubs.a
 
-install: META
+INSTALL+=$(INSTALL_UNIX)
+endif
+
+ifeq ($(WITH_LWT), 0)
+INSTALL_LWT:=$(addprefix unistd_unix_lwt,$(TYPES)) \
+             $(addprefix $(MOD_NAME)_lwt,$(TARGETS))
+
+INSTALL_LWT:=$(addprefix _build/lwt/,$(INSTALL_LWT))
+INSTALL_LWT:=$(INSTALL_LWT) \
+	      -dll _build/lwt/dll$(MOD_NAME)_lwt_stubs.so \
+	      -nodll _build/lwt/lib$(MOD_NAME)_lwt_stubs.a
+
+INSTALL+=$(INSTALL_LWT)
+endif
+
+ARCHIVES:=_build/lib/unistd.a
+
+ifeq ($(WITH_UNIX), 0)
+ARCHIVES+=_build/unix/$(MOD_NAME).a
+endif
+
+ifeq ($(WITH_LWT), 0)
+ARCHIVES+=_build/lwt/$(MOD_NAME)_lwt.a
+endif
+
+build:
+	$(OCAMLBUILD) $(PRODUCTS)
+
+test: build
+	$(OCAMLBUILD) unix_test/test.native
+	./test.native
+	$(OCAMLBUILD) lwt_test/lwt_test.native
+	./lwt_test.native
+
+
+install:
 	ocamlfind install $(FINDLIB_NAME) META \
-		$(SRC)/$(MOD_NAME).mli \
-		$(BUILD)/$(MOD_NAME).cmi \
-		$(BUILD)/$(MOD_NAME)_lwt.cmi \
-		$(BUILD)/$(MOD_NAME).cma \
-		$(BUILD)/$(MOD_NAME).cmxa \
-		-dll $(BUILD)/dll$(MOD_NAME).so \
-		-nodll $(BUILD)/lib$(MOD_NAME).a $(BUILD)/$(MOD_NAME).a
+		$(INSTALL) \
+		$(ARCHIVES)
 
 uninstall:
 	ocamlfind remove $(FINDLIB_NAME)
@@ -80,6 +97,6 @@ uninstall:
 reinstall: uninstall install
 
 clean:
-	rm -rf _build
-	bash -c "rm -f lib/$(MOD_NAME)_common.{cm?,o} META"
-	bash -c "rm -f lib/{ctypes,no_ctypes}/$(MOD_NAME).{cm?,o}"
+	ocamlbuild -clean
+	rm -f lib/unistd.cm? unix/unistd_unix.cm? \
+	      lib/unistd.o unix/unistd_unix.o

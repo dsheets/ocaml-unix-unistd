@@ -16,23 +16,26 @@
  *)
 
 module Access : sig
-  include module type of Unix_unistd_common.Access
+  include module type of Unistd.Access
 
-  val view : host:host -> t list Ctypes.typ
+  val host : Host.t
+  val view : host:Host.t -> t list Ctypes.typ
 end
 
 module Seek : sig
-  include module type of Unix_unistd_common.Seek
+  include module type of Unistd.Seek
+  val host : Host.t
 end
 
 module Sysconf : sig
-  include module type of Unix_unistd_common.Sysconf
+  include module type of Unistd.Sysconf
+  val host : Host.t
 end
 
 type host = {
-  access  : Access.host;
-  seek    : Seek.host;
-  sysconf : Sysconf.host;
+  access  : Access.Host.t;
+  seek    : Seek.Host.t;
+  sysconf : Sysconf.Host.t;
 }
 val host : host
 
@@ -90,5 +93,3 @@ val seteuid : int -> unit
 
 (** Can raise Unix.Unix_error *)
 val setegid : int -> unit
-
-include Unix_unistd_lwt.S

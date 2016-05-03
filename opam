@@ -14,6 +14,7 @@ install: [make "install"]
 remove: ["ocamlfind" "remove" "unix-unistd"]
 depends: [
   "ocamlfind" {build}
+  "ocamlbuild" {build}
 ]
 depopts: [
   "ctypes"
@@ -21,6 +22,7 @@ depopts: [
   "lwt"
   "unix-type-representations"
   "unix-errno"
+  "base-unix"
 ]
 conflicts: [
   "lwt" {< "2.5.0"}

@@ -15,6 +15,18 @@
  *
  *)
 
-module type S = sig end
+(** Can raise Unix.Unix_error *)
+val write : ?blocking:bool ->
+  Unix.file_descr -> unit Ctypes.ptr -> int -> int Lwt.t
 
-module Make(X:S) = X
+(** Can raise Unix.Unix_error *)
+val pwrite : ?blocking:bool ->
+  Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int Lwt.t
+
+(** Can raise Unix.Unix_error *)
+val read : ?blocking:bool ->
+  Unix.file_descr -> unit Ctypes.ptr -> int -> int Lwt.t
+
+(** Can raise Unix.Unix_error *)
+val pread : ?blocking:bool ->
+  Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int Lwt.t
