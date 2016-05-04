@@ -19,14 +19,14 @@ module Type = Unix_unistd_types.C(Unix_unistd_types_detected)
 
 
 module Access = struct
-  include Unistd.Access
+  open Unistd.Access
 
   let host = Host.of_defns Type.Access.({ r_ok; w_ok; x_ok; f_ok })
   let view ~host = Ctypes.(view ~read:(of_code ~host) ~write:(to_code ~host) int)
 end
 
 module Seek = struct
-  include Unistd.Seek
+  open Unistd.Seek
 
   let host =
     Host.of_defns Type.Seek.({
@@ -39,20 +39,15 @@ module Seek = struct
 end
 
 module Sysconf = struct
-  include Unistd.Sysconf
+  open Unistd.Sysconf
 
   let host = Host.of_defns Type.Sysconf.({ pagesize = _sc_pagesize })
 end
 
-type host = {
-  access  : Access.Host.t;
-  seek    : Seek.Host.t;
-  sysconf : Sysconf.Host.t;
-}
 let host = {
-  access  = Access.host;
-  seek    = Seek.host;
-  sysconf = Sysconf.host;
+  Unistd.access = Access.host;
+  seek          = Seek.host;
+  sysconf       = Sysconf.host;
 }
 
 open Ctypes
@@ -77,11 +72,11 @@ external unix_unistd_lseek_ptr : unit -> nativeint = "unix_unistd_lseek_ptr"
 
 let lseek =
   let cmd =
-    let write cmd = match Seek.(to_code ~host cmd) with
+    let write cmd = match Unistd.Seek.to_code ~host:Seek.host cmd with
       | Some code -> code
       | None -> raise Unix.(Unix_error (EINVAL,"lseek",""))
     in
-    Ctypes.(view ~read:Seek.(of_code_exn ~host) ~write int)
+    Ctypes.(view ~read:(Unistd.Seek.of_code_exn ~host:Seek.host) ~write int)
   in
   let c = local (unix_unistd_lseek_ptr ())
     PosixTypes.(fd @-> off_t @-> cmd @-> returning off_t)
@@ -215,7 +210,7 @@ let readlink =
   in
   fun path ->
     try
-      let sz = ref (Sysconf.(pagesize ~host)) in
+      let sz = ref (Unistd.Sysconf.pagesize ~host:Sysconf.host) in
       let buf = ref (allocate_n uint8_t ~count:!sz) in
       let len = ref (c' path (to_voidp !buf) (Size_t.of_int !sz)) in
       while !len = !sz do
