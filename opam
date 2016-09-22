@@ -15,17 +15,18 @@ remove: ["ocamlfind" "remove" "unix-unistd"]
 depends: [
   "ocamlfind" {build}
   "ocamlbuild" {build}
+  "ctypes-build" {build}
 ]
 depopts: [
   "ctypes"
-  "ctypes-foreign"
   "lwt"
   "unix-type-representations"
+  "posix-types"
   "unix-errno"
   "base-unix"
 ]
 conflicts: [
   "lwt" {< "2.5.0"}
-  "ctypes" {< "0.4.0"}
+  "ctypes" {< "0.9.0"}
   "unix-errno" { < "0.4.0" }
 ]

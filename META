@@ -8,7 +8,7 @@ archive(native, plugin) = "unistd.cmxs"
 exists_if = "unistd.cma"
 
 package "unix" (
-  requires = "unix-unistd ctypes ctypes.foreign unix unix-type-representations unix-errno.unix"
+  requires = "unix-unistd ctypes posix-types unix unix-type-representations unix-errno.unix"
   archive(byte) = "unix_unistd.cma"
   archive(bytes, plugin) = "unix_unistd.cma"
   archive(native) = "unix_unistd.cmxa"

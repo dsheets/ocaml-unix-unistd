@@ -16,7 +16,7 @@
  *)
 
 module Type = Unix_unistd_types.C(Unix_unistd_types_detected)
-
+module C = Unix_unistd_bindings.C(Unix_unistd_generated)
 
 module Access = struct
   open Unistd.Access
@@ -51,269 +51,99 @@ let host = {
 }
 
 open Ctypes
-open Foreign
-open Unsigned
-
-let local addr typ =
-  coerce (ptr void) (funptr typ) (ptr_of_raw_address addr)
-
-let to_off_t = coerce int64_t PosixTypes.off_t
-
-module Uid = UInt
-let uid_t = uint
-module Gid = UInt
-let gid_t = uint
-
-let fd = Unix_representations.(view int ~read:file_descr_of_int ~write:int_of_file_descr)
+open Posix_types
 
 (* Filesystem functions *)
 
-external unix_unistd_lseek_ptr : unit -> nativeint = "unix_unistd_lseek_ptr"
+let handle_error ?label call zero (rv, errno) =
+  if rv < zero
+  then Errno_unix.raise_errno ~call ?label errno
+  else rv
 
-let lseek =
-  let cmd =
-    let write cmd = match Unistd.Seek.to_code ~host:Seek.host cmd with
-      | Some code -> code
-      | None -> raise Unix.(Unix_error (EINVAL,"lseek",""))
-    in
-    Ctypes.(view ~read:(Unistd.Seek.of_code_exn ~host:Seek.host) ~write int)
-  in
-  let c = local (unix_unistd_lseek_ptr ())
-    PosixTypes.(fd @-> off_t @-> cmd @-> returning off_t)
-  in
-  fun fd offset whence ->
-    let offset = to_off_t offset in
-    Errno_unix.raise_on_errno ~call:"lseek" begin fun () ->
-        (match coerce PosixTypes.off_t int64_t (c fd offset whence) with
-          | -1L -> None
-          | off -> Some off)
-    end
+let seek_code cmd = match Unistd.Seek.to_code ~host:Seek.host cmd with
+  | Some code -> code
+  | None -> raise Unix.(Unix_error (EINVAL,"lseek",""))
 
-external unix_unistd_unlink_ptr : unit -> nativeint = "unix_unistd_unlink_ptr"
+let lseek fd offset whence =
+  Off.to_int64
+    (handle_error "lseek" Off.zero
+       (C.lseek fd (Off.of_int64 offset) (seek_code whence)))
 
-let unlink =
-  let c = local (unix_unistd_unlink_ptr ())
-    PosixTypes.(string @-> returning int)
-  in
-  fun pathname ->
-    Errno_unix.raise_on_errno ~call:"unlink" ~label:pathname begin fun () ->
-      match c pathname with
-      | -1 -> None
-      | 0 | _ -> Some ()
-    end
+let unlink path =
+  ignore (handle_error "unlink" 0 ~label:path (C.unlink path))
 
-external unix_unistd_rmdir_ptr : unit -> nativeint = "unix_unistd_rmdir_ptr"
+let rmdir path =
+  ignore (handle_error "rmdir" 0 ~label:path (C.rmdir path))
 
-let rmdir =
-  let c = local (unix_unistd_rmdir_ptr ())
-    PosixTypes.(string @-> returning int)
-  in
-  fun pathname ->
-    Errno_unix.raise_on_errno ~call:"rmdir" ~label:pathname begin fun () ->
-      match c pathname with
-      | -1 -> None
-      | 0 | _ -> Some ()
-    end
+let write fd buf count =
+  Ssize.to_int
+    (handle_error "write" Ssize.zero (C.write fd buf (Size.of_int count)))
 
-external unix_unistd_write_ptr : unit -> nativeint = "unix_unistd_write_ptr"
+let pwrite fd buf count offset =
+  Ssize.to_int
+    (handle_error "pwrite" Ssize.zero
+       (C.pwrite fd buf (Size.of_int count) (Off.of_int64 offset)))
 
-let write =
-  let c = local (unix_unistd_write_ptr ())
-    PosixTypes.(fd @-> ptr void @-> size_t @-> returning size_t)
-  in
-  fun fd buf count ->
-    Errno_unix.raise_on_errno ~call:"write" begin fun () ->
-      match Size_t.to_int (c fd buf (Size_t.of_int count)) with
-      | -1 -> None
-      | sz -> Some sz
-    end
+let read fd buf count =
+  Ssize.to_int
+    (handle_error "read" Ssize.zero (C.read fd buf (Size.of_int count)))
 
-external unix_unistd_pwrite_ptr : unit -> nativeint = "unix_unistd_pwrite_ptr"
+let pread fd buf count offset =
+  Ssize.to_int
+    (handle_error "pread" Ssize.zero
+       (C.pread fd buf (Size.of_int count) (Off.of_int64 offset)))
 
-let pwrite =
-  let c = local (unix_unistd_pwrite_ptr ())
-    PosixTypes.(fd @-> ptr void @-> size_t @-> off_t @-> returning size_t)
-  in
-  fun fd buf count offset ->
-    let offset = to_off_t offset in
-    Errno_unix.raise_on_errno ~call:"pwrite" begin fun () ->
-      match Size_t.to_int (c fd buf (Size_t.of_int count) offset) with
-      | -1 -> None
-      | sz -> Some sz
-    end
-
-external unix_unistd_read_ptr : unit -> nativeint = "unix_unistd_read_ptr"
-
-let read =
-  let c = local (unix_unistd_read_ptr ())
-    PosixTypes.(fd @-> ptr void @-> size_t @-> returning size_t)
-  in
-  fun fd buf count ->
-    Errno_unix.raise_on_errno ~call:"read" begin fun () ->
-      match Size_t.to_int (c fd buf (Size_t.of_int count)) with
-      | -1 -> None
-      | sz -> Some sz
-    end
-
-external unix_unistd_pread_ptr : unit -> nativeint = "unix_unistd_pread_ptr"
-
-let pread =
-  let c = local (unix_unistd_pread_ptr ())
-    PosixTypes.(fd @-> ptr void @-> size_t @-> off_t @-> returning size_t)
-  in
-  fun fd buf count offset ->
-    let offset = to_off_t offset in
-    Errno_unix.raise_on_errno ~call:"pread" begin fun () ->
-      match Size_t.to_int (c fd buf (Size_t.of_int count) offset) with
-      | -1 -> None
-      | sz -> Some sz
-    end
-
-external unix_unistd_close_ptr : unit -> nativeint = "unix_unistd_close_ptr"
-
-let close =
-  let c = local (unix_unistd_close_ptr ())
-    PosixTypes.(fd @-> returning int)
-  in
-  fun fd ->
-    Errno_unix.raise_on_errno ~call:"close" begin fun () ->
-      match c fd with
-      | -1 -> None
-      | 0 | _ -> Some ()
-    end
-
-external unix_unistd_access_ptr : unit -> nativeint = "unix_unistd_access_ptr"
-
-let access =
-  let c = local (unix_unistd_access_ptr ())
-    PosixTypes.(string @-> Access.(view ~host) @-> returning int)
-  in
-  fun pathname mode ->
-    Errno_unix.raise_on_errno ~call:"access" ~label:pathname begin fun () ->
-      match c pathname mode with
-      | -1 -> None
-      | 0 | _ -> Some ()
-    end
-
-external unix_unistd_readlink_ptr : unit -> nativeint = "unix_unistd_readlink_ptr"
+let close fd =
+  ignore (handle_error "close" 0 (C.close fd))
+    
+let access pathname mode =
+  ignore
+    (handle_error "access" 0 ~label:pathname
+       (C.access pathname (Unistd.Access.to_code ~host:Access.host mode)))
 
 let readlink =
-  let c = local (unix_unistd_readlink_ptr ())
-    PosixTypes.(string @-> ptr void @-> size_t @-> returning size_t)
-  in
   let c' path buf sz =
-    Errno_unix.raise_on_errno ~call:"readlink" ~label:path begin fun () ->
-      match Size_t.to_int (c path buf sz) with
-      | -1 -> None
-      | sz -> Some sz
-    end
+    handle_error "readlink" Ssize.zero ~label:path
+      (C.readlink path buf sz) 
   in
   fun path ->
-    try
-      let sz = ref (Unistd.Sysconf.pagesize ~host:Sysconf.host) in
-      let buf = ref (allocate_n uint8_t ~count:!sz) in
-      let len = ref (c' path (to_voidp !buf) (Size_t.of_int !sz)) in
-      while !len = !sz do
-        sz  := !sz * 2;
-        buf := allocate_n uint8_t ~count:!sz;
-        len := c' path (to_voidp !buf) (Size_t.of_int !sz)
-      done;
-      CArray.(set (from_ptr !buf (!len+1)) !len (UInt8.of_int 0));
-      coerce (ptr uint8_t) string !buf
-    with Unix.Unix_error(e,_,_) -> raise (Unix.Unix_error (e,"readlink",path))
+    let sz = ref (Unistd.Sysconf.pagesize ~host:Sysconf.host) in
+    let buf = ref (allocate_n char ~count:!sz) in
+    let len = ref (Ssize.to_int (c' path !buf (Size.of_int !sz))) in
+    while !len = !sz do
+      sz  := !sz * 2;
+      buf := allocate_n char ~count:!sz;
+      len := Ssize.to_int (c' path !buf (Size.of_int !sz))
+    done;
+    CArray.(set (from_ptr !buf (!len+1)) !len (Char.chr 0));
+    coerce (ptr char) string !buf
 
-external unix_unistd_symlink_ptr : unit -> nativeint = "unix_unistd_symlink_ptr"
+let symlink target linkpath =
+  ignore (handle_error ~label:linkpath "symlink" 0 (C.symlink target linkpath))
 
-let symlink =
-  let c = local (unix_unistd_symlink_ptr ())
-    PosixTypes.(string @-> string @-> returning int)
-  in
-  fun source dest ->
-    Errno_unix.raise_on_errno ~call:"symlink" ~label:dest begin fun () ->
-      match c source dest with
-      | -1 -> None
-      | 0 | _ -> Some ()
-    end
+let truncate path length =
+  ignore
+    (handle_error "truncate" ~label:path 0
+       (C.truncate path (Off.of_int64 length)))
 
-external unix_unistd_truncate_ptr : unit -> nativeint = "unix_unistd_truncate_ptr"
+let ftruncate fd length =
+  ignore
+    (handle_error "truncate" 0 (C.ftruncate fd (Off.of_int64 length)))
 
-let truncate =
-  let c = local (unix_unistd_truncate_ptr ())
-    PosixTypes.(string @-> off_t @-> returning int)
-  in
-  fun path length ->
-    Errno_unix.raise_on_errno ~call:"truncate" ~label:path begin fun () ->
-      match c path (to_off_t length) with
-      | -1 -> None
-      | 0 | _ -> Some ()
-    end
+let chown path owner group =
+  ignore
+    (handle_error "chown" 0 ~label:path
+       (C.chown path (Uid.of_int owner) (Gid.of_int group)))
 
-external unix_unistd_ftruncate_ptr : unit -> nativeint = "unix_unistd_ftruncate_ptr"
-
-let ftruncate =
-  let c = local (unix_unistd_ftruncate_ptr ())
-    PosixTypes.(fd @-> off_t @-> returning int)
-  in
-  fun fd length ->
-    Errno_unix.raise_on_errno ~call:"ftruncate" begin fun () ->
-      match c fd (to_off_t length) with
-      | -1 -> None
-      | 0 | _ -> Some ()
-    end
-
-external unix_unistd_chown_ptr : unit -> nativeint = "unix_unistd_chown_ptr"
-
-let to_uid_t = Uid.of_int
-let to_gid_t = Gid.of_int
-
-let chown =
-  let c = local (unix_unistd_chown_ptr ())
-    PosixTypes.(string @-> uid_t @-> gid_t @-> returning int)
-  in
-  fun path owner group ->
-    Errno_unix.raise_on_errno ~call:"chown" ~label:path begin fun () ->
-      match c path (to_uid_t owner) (to_gid_t group) with
-      | -1 -> None
-      | 0 | _ -> Some ()
-    end
-
-external unix_unistd_fchown_ptr : unit -> nativeint = "unix_unistd_fchown_ptr"
-
-let fchown =
-  let c = local (unix_unistd_fchown_ptr ())
-    PosixTypes.(fd @-> uid_t @-> gid_t @-> returning int)
-  in
-  fun fd owner group ->
-    Errno_unix.raise_on_errno ~call:"fchown" begin fun () ->
-      match c fd (to_uid_t owner) (to_gid_t group) with
-      | -1 -> None
-      | 0 | _ -> Some ()
-    end
+let fchown fd owner group =
+  ignore
+    (handle_error "fchown" 0
+       (C.fchown fd (Uid.of_int owner) (Gid.of_int group)))
 
 (* Process functions *)
 
-external unix_unistd_seteuid_ptr : unit -> nativeint = "unix_unistd_seteuid_ptr"
+let seteuid euid =
+  ignore (handle_error "seteuid" 0 (C.seteuid (Posix_types.Uid.of_int euid)))
 
-let seteuid =
-  let c = local (unix_unistd_seteuid_ptr ())
-    PosixTypes.(uid_t @-> returning int)
-  in
-  fun uid ->
-    Errno_unix.raise_on_errno ~call:"seteuid" begin fun () ->
-      match c (to_uid_t uid) with
-      | -1 -> None
-      | 0 | _ -> Some ()
-    end
-
-external unix_unistd_setegid_ptr : unit -> nativeint = "unix_unistd_setegid_ptr"
-
-let setegid =
-  let c = local (unix_unistd_setegid_ptr ())
-    PosixTypes.(gid_t @-> returning int)
-  in
-  fun gid ->
-    Errno_unix.raise_on_errno ~call:"setegid" begin fun () ->
-      match c (to_gid_t gid) with
-      | -1 -> None
-      | 0 | _ -> Some ()
-    end
+let setegid egid =
+  ignore (handle_error "setguid" 0 (C.setegid (Posix_types.Gid.of_int egid)))

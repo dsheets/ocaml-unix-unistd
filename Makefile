@@ -12,13 +12,14 @@ LWT_LIB_DIR=$(shell ocamlfind query lwt)
 OCAMLBUILD=CTYPES_LIB_DIR=$(CTYPES_LIB_DIR) \
            LWT_LIB_DIR=$(LWT_LIB_DIR)       \
            OCAML_LIB_DIR=$(OCAML_LIB_DIR)   \
-             ocamlbuild -use-ocamlfind -classic-display
+             ocamlbuild -use-ocamlfind -classic-display \
+                -plugin-tags 'package(ctypes-build.ocamlbuild)'
 
 WITH_UNIX=$(shell ocamlfind query \
-            ctypes unix unix-type-representations unix-errno.unix \
+            ctypes unix unix-type-representations unix-errno.unix posix-types \
             > /dev/null 2>&1 ; echo $$?)
 WITH_LWT=$(shell ocamlfind query \
-            lwt ctypes unix unix-type-representations unix-errno.unix \
+            lwt ctypes unix unix-type-representations unix-errno.unix posix-types \
             > /dev/null 2>&1 ; echo $$?)
 
 TARGETS=.cma .cmxa
