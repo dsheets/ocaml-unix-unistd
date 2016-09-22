@@ -1,12 +1,7 @@
 let (>>=) = Lwt.(>>=)
 
-external lwt_pwrite_c_memory_job :
-  Unix.file_descr -> _ -> len:int -> offset:int64 -> int Lwt_unix.job
-  = "unix_unistd_lwt_pwrite_c_memory_job"
-
-external lwt_pread_c_memory_job :
-  Unix.file_descr -> _ -> len:int -> offset:int64 -> int Lwt_unix.job
-  = "unix_unistd_lwt_pread_c_memory_job"
+module Gen = Unix_unistd_lwt_generated
+module C = Unix_unistd_bindings.C(Unix_unistd_lwt_generated)
 
 module type S =
 sig
@@ -36,12 +31,17 @@ let write ?blocking fd ptr len =
   let lwt_fd = Lwt_unix.of_unix_file_descr ?blocking fd in
   Lwt_bytes.write lwt_fd (char_bigarray_of_unit_ptr ptr len) 0 len
 
+open Posix_types
+
 let pwrite ?blocking fd (Ctypes_static.CPointer ptr as p) len offset =
   let lwt_fd = Lwt_unix.of_unix_file_descr ?blocking fd in
   Lwt_unix.blocking lwt_fd >>= function
   | true ->
     Lwt_unix.wait_write lwt_fd >>= fun () ->
-    Lwt_unix.run_job (lwt_pwrite_c_memory_job fd ptr ~len ~offset)
+    (C.pwrite fd p (Size.of_int len) (Off.of_int64 offset)).Gen.lwt >>= fun (rv, errno) ->
+    if rv < Ssize.zero
+    then Errno_unix.raise_errno ~call:"pwrite" errno
+    else Lwt.return (Ssize.to_int rv)
   | false ->
     Lwt_unix.(wrap_syscall Write) lwt_fd @@ fun () ->
     Unistd_unix.pwrite fd p len offset
@@ -55,7 +55,10 @@ let pread ?blocking fd (Ctypes_static.CPointer ptr as p) len offset =
   Lwt_unix.blocking lwt_fd >>= function
   | true ->
     Lwt_unix.wait_read lwt_fd >>= fun () ->
-    Lwt_unix.run_job (lwt_pread_c_memory_job fd ptr ~len ~offset)
+    (C.pread fd p (Size.of_int len) (Off.of_int64 offset)).Gen.lwt >>= fun (rv, errno) ->
+    if rv < Ssize.zero
+    then Errno_unix.raise_errno ~call:"pread" errno
+    else Lwt.return (Ssize.to_int rv)
   | false ->
     Lwt_unix.(wrap_syscall Read) lwt_fd @@ fun () ->
     Unistd_unix.pread fd p len offset

@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2015 David Sheets <sheets@alum.mit.edu>
+ * Copyright (c) 2016 Jeremy Yallop
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,18 +15,26 @@
  *
  *)
 
-open Ctypes
+let headers = "\
+#define _DEFAULT_SOURCE\n\
+#define _BSD_SOURCE\n\
+#define _XOPEN_SOURCE 600\n\
+#define _GNU_SOURCE // includes the previous feature macros on Linux\n\
+\n\
+#include <stdint.h>\n\
+#include <sys/types.h>\n\
+#include <unistd.h>\n\
+"
 
-let () =
-  let prefix = "caml_" in
-  let stubs_oc = open_out "unix/unix_dirent_stubs.c" in
-  let fmt = Format.formatter_of_out_channel stubs_oc in
-  Format.fprintf fmt "#include <dirent.h>@.";
-  Format.fprintf fmt "#include \"unix_dirent_util.h\"@.";
-  Cstubs.write_c fmt ~prefix (module Unix_dirent_bindings.C);
-  close_out stubs_oc;
-
-  let generated_oc = open_out "unix/unix_dirent_generated.ml" in
-  let fmt = Format.formatter_of_out_channel generated_oc in
-  Cstubs.write_ml fmt ~prefix (module Unix_dirent_bindings.C);
-  close_out generated_oc
+let () = Ctypes_stub_generator.main
+    [ { Ctypes_stub_generator.name = "unix";
+        errno = Cstubs.return_errno;
+        concurrency = Cstubs.unlocked;
+        headers;
+        bindings = (module Unix_unistd_bindings.C) };
+      
+      { Ctypes_stub_generator.name = "lwt";
+        errno = Cstubs.return_errno;
+        concurrency = Cstubs.lwt_jobs;
+        headers;
+        bindings = (module Unix_unistd_bindings.C) } ]
