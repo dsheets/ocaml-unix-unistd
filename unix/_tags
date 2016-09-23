@@ -1,3 +1,4 @@
 <*.{ml,mli,c}>: package(bytes), package(ctypes.stubs), package(unix-errno.unix)
 <*.{ml,mli}>: package(unix-type-representations), package(posix-types)
 <*.{cma,cmxa}>: use_unistd_stubs
+<*.c>: use_ctypes
