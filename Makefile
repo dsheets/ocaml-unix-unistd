@@ -36,7 +36,7 @@ PRODUCTS+=$(addprefix $(MOD_NAME)_lwt,$(TARGETS)) \
           lib$(MOD_NAME)_lwt_stubs.a dll$(MOD_NAME)_lwt_stubs.so
 endif
 
-TYPES=.mli .cmi .cmti
+TYPES=.mli .cmi .cmti .cmx
 
 INSTALL:=$(addprefix unistd,$(TYPES)) \
          $(addprefix unistd,$(TARGETS))
