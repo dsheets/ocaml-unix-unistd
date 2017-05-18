@@ -16,17 +16,17 @@
  *)
 
 (** Can raise Unix.Unix_error *)
-val write : ?blocking:bool ->
+val write : ?blocking:bool -> ?set_flags:bool ->
   Unix.file_descr -> unit Ctypes.ptr -> int -> int Lwt.t
 
 (** Can raise Unix.Unix_error *)
-val pwrite : ?blocking:bool ->
+val pwrite : ?blocking:bool -> ?set_flags:bool ->
   Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int Lwt.t
 
 (** Can raise Unix.Unix_error *)
-val read : ?blocking:bool ->
+val read : ?blocking:bool -> ?set_flags:bool ->
   Unix.file_descr -> unit Ctypes.ptr -> int -> int Lwt.t
 
 (** Can raise Unix.Unix_error *)
-val pread : ?blocking:bool ->
+val pread : ?blocking:bool -> ?set_flags:bool ->
   Unix.file_descr -> unit Ctypes.ptr -> int -> int64 -> int Lwt.t
